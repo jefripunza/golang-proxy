@@ -14,6 +14,8 @@ interface ProxyLog {
   error_message: string
   request_headers: string
   response_headers: string
+  request_body: string
+  response_body: string
 }
 
 const logs = ref<ProxyLog[]>([])
@@ -233,6 +235,26 @@ onMounted(() => {
                 <span class="text-green-400 shrink-0">{{ key }}:</span>
                 <span class="text-ash break-all">{{ val }}</span>
               </div>
+            </div>
+          </div>
+
+          <!-- Request Body -->
+          <div>
+            <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase">Request Body</span>
+            <div class="mt-1.5 bg-deep-coal rounded-lg p-3 font-jetbrains-mono text-xs max-h-40 overflow-y-auto">
+              <div v-if="!selectedLog.request_body" class="text-ash">No body</div>
+              <div v-else-if="selectedLog.request_body.startsWith('[file')" class="text-yellow-400">{{ selectedLog.request_body }}</div>
+              <pre v-else class="text-ash whitespace-pre-wrap break-all">{{ selectedLog.request_body }}</pre>
+            </div>
+          </div>
+
+          <!-- Response Body -->
+          <div>
+            <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase">Response Body</span>
+            <div class="mt-1.5 bg-deep-coal rounded-lg p-3 font-jetbrains-mono text-xs max-h-40 overflow-y-auto">
+              <div v-if="!selectedLog.response_body" class="text-ash">No body</div>
+              <div v-else-if="selectedLog.response_body.startsWith('[file')" class="text-yellow-400">{{ selectedLog.response_body }}</div>
+              <pre v-else class="text-ash whitespace-pre-wrap break-all">{{ selectedLog.response_body }}</pre>
             </div>
           </div>
         </div>

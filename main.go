@@ -52,46 +52,41 @@ func main() {
 		handleProxy(w, r)
 	})
 
-	autoSSL := os.Getenv("AUTO_SSL") == "true"
+	// Let's Encrypt Auto SSL manager (per-route via ssl_active field)
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: hostPolicy,
+		Cache:      autocert.DirCache("certs"),
+	}
 
-	if autoSSL {
-		// Auto SSL Let's Encrypt setup
-		certManager := autocert.Manager{
-			Prompt:     autocert.AcceptTOS,
-			HostPolicy: hostPolicy,
-			Cache:      autocert.DirCache("certs"),
+	// Port 80 handles HTTP-01 ACME challenges
+	go func() {
+		log.Println("[proxy] HTTP-01 challenge listener on port 80")
+		if err := http.ListenAndServe("0.0.0.0:80", certManager.HTTPHandler(nil)); err != nil {
+			log.Fatalf("HTTP challenge listener failed: %v", err)
 		}
+	}()
 
-		// Port 80 handles HTTP-01 challenges and redirects others to HTTPS
-		go func() {
-			log.Println("[proxy] HTTP server redirecting to HTTPS on port 80...")
-			err := http.ListenAndServe("0.0.0.0:80", certManager.HTTPHandler(nil))
-			if err != nil {
-				log.Fatalf("HTTP challenge listener failed: %v", err)
-			}
-		}()
-
-		// Port 443 handles the actual proxying securely
+	// Port 443 handles SSL-terminated proxying
+	go func() {
 		server := &http.Server{
 			Addr:      "0.0.0.0:443",
 			Handler:   proxyHandler,
 			TLSConfig: certManager.TLSConfig(),
 		}
-
-		log.Println("[proxy] listening securely on port 443 (HTTPS)")
+		log.Println("[proxy] HTTPS listener on port 443")
 		if err := server.ListenAndServeTLS("", ""); err != nil {
 			log.Fatalf("HTTPS proxy server failed: %v", err)
 		}
-	} else {
-		// Normal HTTP listener
-		server := &http.Server{
-			Addr:    "0.0.0.0:" + listenPort,
-			Handler: proxyHandler,
-		}
+	}()
 
-		log.Printf("[proxy] listening on port %s (HTTP)", listenPort)
-		if err := server.ListenAndServe(); err != nil {
-			log.Fatalf("HTTP proxy server failed: %v", err)
-		}
+	// Port LISTEN_PORT handles plain HTTP proxying
+	server := &http.Server{
+		Addr:    "0.0.0.0:" + listenPort,
+		Handler: proxyHandler,
+	}
+	log.Printf("[proxy] HTTP listener on port %s", listenPort)
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatalf("HTTP proxy server failed: %v", err)
 	}
 }

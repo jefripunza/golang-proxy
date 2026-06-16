@@ -33,6 +33,8 @@ type ProxyLog struct {
 	ErrorMessage    string    `json:"error_message"`
 	RequestHeaders  string    `json:"request_headers"`
 	ResponseHeaders string    `json:"response_headers"`
+	RequestBody     string    `json:"request_body"`
+	ResponseBody    string    `json:"response_body"`
 }
 
 type BlockedIP struct {

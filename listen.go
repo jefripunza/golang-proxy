@@ -149,7 +149,7 @@ func validateRequestMiddleware(validationURL string, r *http.Request) (bool, err
 }
 
 // logProxyRequest saves a proxy request log asynchronously
-func logProxyRequest(domain, path, method string, statusCode int, duration time.Duration, clientIP, errMsg string, reqHeaders, resHeaders string) {
+func logProxyRequest(domain, path, method string, statusCode int, duration time.Duration, clientIP, errMsg string, reqHeaders, resHeaders, reqBody, resBody string) {
 	go func() {
 		logEntry := ProxyLog{
 			Timestamp:       time.Now(),
@@ -162,6 +162,8 @@ func logProxyRequest(domain, path, method string, statusCode int, duration time.
 			ErrorMessage:    errMsg,
 			RequestHeaders:  reqHeaders,
 			ResponseHeaders: resHeaders,
+			RequestBody:     reqBody,
+			ResponseBody:    resBody,
 		}
 		if err := db.Create(&logEntry).Error; err != nil {
 			log.Printf("[logger] failed to write proxy log: %v", err)
@@ -211,7 +213,7 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 	// 1. IP Blocklist validation
 	if isIPBlocked(clientIP) {
 		http.Error(w, "Forbidden: IP address blocked", http.StatusForbidden)
-		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusForbidden, time.Since(startTime), clientIP, "IP Blocked", "", "")
+		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusForbidden, time.Since(startTime), clientIP, "IP Blocked", "", "", "", "")
 		return
 	}
 
@@ -220,7 +222,7 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		msg := "no route matched for " + r.Host + r.URL.Path
 		http.Error(w, msg, http.StatusBadGateway)
-		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, msg, "", "")
+		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, msg, "", "", "", "")
 		return
 	}
 
@@ -240,7 +242,7 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			msg := "dynamic routing resolve failed: " + err.Error()
 			http.Error(w, msg, http.StatusBadGateway)
-			logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, msg, "", "")
+			logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, msg, "", "", "", "")
 			return
 		}
 	}
@@ -249,7 +251,7 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 	if !checkAuthProxy(r, finalAuth) {
 		w.Header().Set("WWW-Authenticate", `Basic realm="Proxy"`)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusUnauthorized, time.Since(startTime), clientIP, "Unauthorized", "", "")
+		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusUnauthorized, time.Since(startTime), clientIP, "Unauthorized", "", "", "", "")
 		return
 	}
 
@@ -267,7 +269,7 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 				errMsg += ": " + err.Error()
 			}
 			http.Error(w, errMsg, http.StatusForbidden)
-			logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusForbidden, time.Since(startTime), clientIP, errMsg, "", "")
+			logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusForbidden, time.Since(startTime), clientIP, errMsg, "", "", "", "")
 			return
 		}
 	}
@@ -285,11 +287,18 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 		parsedURL = parsedURL[:idx]
 	}
 
-	outReq, err := http.NewRequest(r.Method, cleanedTarget+r.URL.RequestURI(), r.Body)
+	// Buffer request body for logging
+	var reqBodyBytes []byte
+	if r.Body != nil {
+		reqBodyBytes, _ = io.ReadAll(r.Body)
+		r.Body.Close()
+	}
+
+	outReq, err := http.NewRequest(r.Method, cleanedTarget+r.URL.RequestURI(), bytes.NewReader(reqBodyBytes))
 	if err != nil {
 		msg := "bad gateway: " + err.Error()
 		http.Error(w, msg, http.StatusBadGateway)
-		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, msg, "", "")
+		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, msg, "", "", "", "")
 		return
 	}
 	outReq.Header = stripProxyHeaders(r.Header, parsedURL)
@@ -298,7 +307,7 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		msg := "bad gateway: " + err.Error()
 		http.Error(w, msg, http.StatusBadGateway)
-		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, msg, "", "")
+		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, msg, "", "", "", "")
 		return
 	}
 	defer resp.Body.Close()
@@ -309,12 +318,31 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(resp.StatusCode)
-	_, _ = io.Copy(w, resp.Body)
+
+	// Capture response body (limited to 64KB for logging), stream all to client
+	var logBuf bytes.Buffer
+	const maxBody = 64 * 1024
+	bodyReader := io.TeeReader(resp.Body, &logBuf)
+	_, _ = io.Copy(w, bodyReader)
+	resp.Body.Close()
+
+	reqBodyStr := truncateBody(reqBodyBytes, maxBody)
+	resBodyStr := truncateBody(logBuf.Bytes(), maxBody)
 
 	// Log only if path matches one of the comma-separated prefixes (or none set)
 	if pathMatchesPrefix(r.URL.Path, route.LogPathPrefix) {
-		logProxyRequest(r.Host, r.URL.Path, r.Method, resp.StatusCode, time.Since(startTime), clientIP, "", headersToJSON(r.Header), headersToJSON(resp.Header))
+		logProxyRequest(r.Host, r.URL.Path, r.Method, resp.StatusCode, time.Since(startTime), clientIP, "", headersToJSON(r.Header), headersToJSON(resp.Header), reqBodyStr, resBodyStr)
 	}
+}
+
+func truncateBody(data []byte, max int) string {
+	if len(data) == 0 {
+		return ""
+	}
+	if len(data) > max {
+		return "[file/large body — truncated]"
+	}
+	return string(data)
 }
 
 func pathMatchesPrefix(path, prefixField string) bool {
@@ -343,7 +371,7 @@ func upgradeHandler(w http.ResponseWriter, r *http.Request) {
 			conn.Write([]byte("HTTP/1.1 403 Forbidden\r\n\r\n"))
 			conn.Close()
 		}
-		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusForbidden, time.Since(startTime), clientIP, "WS IP Blocked", "", "")
+		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusForbidden, time.Since(startTime), clientIP, "WS IP Blocked", "", "", "", "")
 		return
 	}
 
@@ -355,7 +383,7 @@ func upgradeHandler(w http.ResponseWriter, r *http.Request) {
 			conn.Write([]byte("HTTP/1.1 502 Bad Gateway\r\n\r\n"))
 			conn.Close()
 		}
-		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, "WS Route not found", "", "")
+		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, "WS Route not found", "", "", "", "")
 		return
 	}
 
@@ -378,7 +406,7 @@ func upgradeHandler(w http.ResponseWriter, r *http.Request) {
 				conn.Write([]byte("HTTP/1.1 502 Bad Gateway\r\n\r\n"))
 				conn.Close()
 			}
-			logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, "WS Dynamic resolve failed: "+err.Error(), "", "")
+			logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, "WS Dynamic resolve failed: "+err.Error(), "", "", "", "")
 			return
 		}
 	}
@@ -390,7 +418,7 @@ func upgradeHandler(w http.ResponseWriter, r *http.Request) {
 			conn, _, _ := hj.Hijack()
 			conn.Close()
 		}
-		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusUnauthorized, time.Since(startTime), clientIP, "WS Unauthorized", "", "")
+		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusUnauthorized, time.Since(startTime), clientIP, "WS Unauthorized", "", "", "", "")
 		return
 	}
 
@@ -403,7 +431,7 @@ func upgradeHandler(w http.ResponseWriter, r *http.Request) {
 				conn.Write([]byte("HTTP/1.1 403 Forbidden\r\n\r\n"))
 				conn.Close()
 			}
-			logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusForbidden, time.Since(startTime), clientIP, "WS Validation failed", "", "")
+			logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusForbidden, time.Since(startTime), clientIP, "WS Validation failed", "", "", "", "")
 			return
 		}
 	}
@@ -423,7 +451,7 @@ func upgradeHandler(w http.ResponseWriter, r *http.Request) {
 			conn.Write([]byte("HTTP/1.1 502 Bad Gateway\r\n\r\n"))
 			conn.Close()
 		}
-		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, "WS TCP Dial failed: "+err.Error(), "", "")
+		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, "WS TCP Dial failed: "+err.Error(), "", "", "", "")
 		return
 	}
 
@@ -431,7 +459,7 @@ func upgradeHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		http.Error(w, "hijacking not supported", http.StatusInternalServerError)
 		target.Close()
-		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusInternalServerError, time.Since(startTime), clientIP, "WS Hijack not supported", "", "")
+		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusInternalServerError, time.Since(startTime), clientIP, "WS Hijack not supported", "", "", "", "")
 		return
 	}
 	clientConn, _, err := hj.Hijack()
@@ -461,7 +489,7 @@ func upgradeHandler(w http.ResponseWriter, r *http.Request) {
 	target.Close()
 	clientConn.Close()
 
-	logProxyRequest(r.Host, r.URL.Path, r.Method, 101, time.Since(startTime), clientIP, "", "", "")
+	logProxyRequest(r.Host, r.URL.Path, r.Method, 101, time.Since(startTime), clientIP, "", "", "", "", "")
 }
 
 func setSessionCookie(w http.ResponseWriter) {
@@ -487,6 +515,7 @@ var proxyHeadersToStrip = []string{
 	"Cf-Connecting-Ip",
 	"True-Client-Ip",
 	"Authorization",
+	"Accept-Encoding",
 }
 
 func stripProxyHeaders(h http.Header, targetHost string) http.Header {

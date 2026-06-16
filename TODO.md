@@ -1,7 +1,7 @@
 # Task List
 
 ## Backlog
-- Request Detail di dialog Logs, tambahkan request body dan response body, jika request/response body nya file maka di namai saja file
+- 
 
 ## Error / Bug
 - 
@@ -54,3 +54,5 @@
 - [x] Routes: Log URL Prefix optional field — filter proxy request logging by path prefix
 - [x] Log URL Prefix: support comma-separated multiple prefixes with trim spaces
 - [x] Logs: Clear Logs button + DELETE /api/logs endpoint
+- [x] Logs detail: add request body + response body (capped 64KB, labeled "[file/large body — truncated]" if oversized)
+- [x] Dockerfile + docker.sh adapted for golang-proxy (bun FE + go BE, multi-arch buildx)
