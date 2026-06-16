@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '@/services/api'
 import Chart from '@/components/common/Chart.vue'
+
+const router = useRouter()
 
 interface Metrics {
   total_requests: number
@@ -29,16 +32,27 @@ const fetchMetrics = async () => {
 
 onMounted(() => {
   fetchMetrics()
-  // Poll every 10 seconds for real-time dashboard updates
   const interval = setInterval(fetchMetrics, 10000)
   return () => clearInterval(interval)
 })
 
 const getVolumeChartOptions = (seriesData: { timestamp: number; value: number }[]): Highcharts.Options => ({
-  chart: { type: 'area' },
-  title: { text: 'Request Volume (Last 24 Hours)', align: 'left' },
-  xAxis: { type: 'datetime' },
-  yAxis: { title: { text: 'Requests' } },
+  chart: { type: 'area', height: 280 },
+  title: { text: 'Request Volume', align: 'left', margin: 0, y: 16 },
+  xAxis: { type: 'datetime', lineWidth: 0, tickWidth: 0, labels: { y: 16 } },
+  yAxis: {
+    title: { text: undefined },
+    gridLineDashStyle: 'Dash' as Highcharts.DashStyleValue,
+    labels: { y: 8 }
+  },
+  plotOptions: {
+    area: {
+      marker: { radius: 2, symbol: 'circle', fillColor: '#6798ff', lineWidth: 0 },
+      lineWidth: 1.5,
+      states: { hover: { lineWidth: 2 } },
+      threshold: null
+    }
+  },
   series: [{
     name: 'Requests',
     type: 'area',
@@ -47,53 +61,66 @@ const getVolumeChartOptions = (seriesData: { timestamp: number; value: number }[
     fillColor: {
       linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
       stops: [
-        [0, 'rgba(103, 152, 255, 0.4)'],
-        [1, 'rgba(103, 152, 255, 0.05)']
+        [0, 'rgba(103, 152, 255, 0.35)'],
+        [1, 'rgba(103, 152, 255, 0.02)']
       ]
     }
   }]
 })
 
 const getLatencyChartOptions = (seriesData: { timestamp: number; value: number }[]): Highcharts.Options => ({
-  chart: { type: 'line' },
-  title: { text: 'Response Latency (Last 24 Hours)', align: 'left' },
-  xAxis: { type: 'datetime' },
-  yAxis: { title: { text: 'Latency (ms)' } },
+  chart: { type: 'spline', height: 280 },
+  title: { text: 'Response Latency', align: 'left', margin: 0, y: 16 },
+  xAxis: { type: 'datetime', lineWidth: 0, tickWidth: 0, labels: { y: 16 } },
+  yAxis: {
+    title: { text: 'ms', align: 'high', rotation: 0, offset: 0, y: -12, x: 8 },
+    gridLineDashStyle: 'Dash' as Highcharts.DashStyleValue,
+    labels: { y: 8 }
+  },
+  plotOptions: {
+    spline: {
+      marker: { enabled: false },
+      lineWidth: 1.5,
+      states: { hover: { lineWidth: 2.5 } }
+    }
+  },
   series: [{
-    name: 'Average Latency',
-    type: 'line',
+    name: 'Avg Latency',
+    type: 'spline',
     data: seriesData.map(d => [d.timestamp, d.value]),
     color: '#a7a7a7'
   }]
 })
 
 const getStatusCodesChartOptions = (seriesData: { name: string; value: number }[]): Highcharts.Options => ({
-  chart: { type: 'pie' },
-  title: { text: 'HTTP Status Code Distribution', align: 'left' },
-  tooltip: { pointFormat: '<b>{point.percentage:.1f}%</b> ({point.y} requests)' },
+  chart: { type: 'pie', height: 280 },
+  title: { text: 'Status Code Distribution', align: 'left', margin: 0, y: 16 },
+  tooltip: { pointFormat: '<b>{point.percentage:.1f}%</b> ({point.y})' },
   plotOptions: {
     pie: {
       allowPointSelect: true,
       cursor: 'pointer',
       borderWidth: 1,
       borderColor: '#1e1e1e',
+      innerSize: '55%',
       dataLabels: {
         enabled: true,
-        format: '{point.name}: {point.y}',
-        style: { color: '#ffffff', textOutline: 'none' }
+        distance: 8,
+        format: '{point.name}',
+        style: { color: '#a7a7a7', fontSize: '10px', textOutline: 'none', fontWeight: '500' }
       }
     }
   },
   series: [{
-    name: 'Status Codes',
+    name: 'Codes',
     type: 'pie',
     data: seriesData.map(d => {
-      let color = '#a7a7a7';
-      if (d.name.startsWith('2')) color = '#22c55e'; // Success (green)
-      else if (d.name.startsWith('3')) color = '#6798ff'; // Redirect (blue-cornflower)
-      else if (d.name.startsWith('4')) color = '#eab308'; // Client Error (yellow)
-      else if (d.name.startsWith('5')) color = '#ef4444'; // Server Error (red)
-      else if (d.name.toLowerCase().includes('fail') || d.name.toLowerCase().includes('block')) color = '#ef4444'; // Blocked/Failed (red)
+      let color = '#454545'
+      if (d.name.startsWith('2')) color = '#22c55e'
+      else if (d.name.startsWith('3')) color = '#6798ff'
+      else if (d.name.startsWith('4')) color = '#eab308'
+      else if (d.name.startsWith('5')) color = '#ef4444'
+      else color = '#ef4444'
       return { name: d.name, y: d.value, color }
     })
   }]
@@ -101,64 +128,129 @@ const getStatusCodesChartOptions = (seriesData: { name: string; value: number }[
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <span class="text-caption font-jetbrains-mono tracking-caption text-blue-cornflower uppercase">DASHBOARD</span>
-        <h2 class="text-3xl font-semibold text-snow mt-1 tracking-tight">Overview</h2>
-      </div>
-      <button
-        @click="fetchMetrics"
-        class="px-4 py-2 bg-transparent border border-graphite rounded-lg text-snow text-sm font-medium hover:bg-card-carbon transition-colors cursor-pointer"
-      >
-        Refresh Data
-      </button>
-    </div>
-
-    <!-- Loading State -->
-    <div v-if="loading" class="h-64 flex items-center justify-center text-ash">
-      Loading analytics metrics...
-    </div>
-
-    <template v-else-if="metrics">
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <!-- Total Requests -->
-        <div class="bg-card-carbon border border-steel-border rounded-lg p-6">
-          <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase">TOTAL REQUESTS</span>
-          <div class="text-4xl font-semibold text-snow mt-2 font-inter">{{ metrics.total_requests }}</div>
-        </div>
-
-        <!-- Success Rate -->
-        <div class="bg-card-carbon border border-steel-border rounded-lg p-6">
-          <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase">SUCCESS RATE</span>
-          <div class="text-4xl font-semibold text-snow mt-2 font-inter">
-            {{ metrics.total_requests > 0 ? ((metrics.success_requests / metrics.total_requests) * 100).toFixed(1) : '100' }}%
+  <div class="space-y-10">
+    <!-- Hero Section -->
+    <section class="relative pt-4 pb-6">
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
+        <div class="max-w-xl space-y-5">
+          <span class="text-caption font-jetbrains-mono tracking-caption text-blue-cornflower uppercase font-medium">
+            COMMAND CENTER
+          </span>
+          <h1 class="text-heading font-semibold text-snow leading-[1.15] tracking-[-0.84px] max-w-md">
+            Get total clarity from your proxy traffic
+          </h1>
+          <p class="text-base text-ash leading-relaxed max-w-lg">
+            Monitor request volume, latency, and status codes in real&ndash;time. Centralize your proxy analytics to pinpoint bottlenecks and optimize routing performance.
+          </p>
+          <div class="flex items-center gap-3 pt-1">
+            <button
+              type="button"
+              @click="fetchMetrics"
+              class="px-5 py-2.5 bg-snow text-page-ink rounded-lg text-[13px] font-semibold hover:bg-ash transition-colors cursor-pointer leading-none"
+            >
+              Refresh metrics
+            </button>
+            <button
+              type="button"
+              @click="router.push('/logs')"
+              class="px-5 py-2.5 border border-graphite rounded-lg text-snow text-[13px] font-medium hover:bg-card-carbon/50 transition-colors cursor-pointer leading-none"
+            >
+              View logs
+            </button>
           </div>
         </div>
 
-        <!-- Error Requests -->
-        <div class="bg-card-carbon border border-steel-border rounded-lg p-6">
-          <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase">ERRORS / BLOCKED</span>
-          <div class="text-4xl font-semibold text-red-400 mt-2 font-inter">{{ metrics.error_requests }}</div>
+        <!-- Preview Card -->
+        <div class="hidden lg:block shrink-0 w-[420px]">
+          <div class="bg-card-carbon border border-steel-border rounded-lg overflow-hidden">
+            <div class="h-8 border-b border-steel-border flex items-center px-4 gap-2">
+              <div class="flex gap-1.5">
+                <div class="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                <div class="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                <div class="w-2.5 h-2.5 rounded-full bg-green-400/60" />
+              </div>
+              <span class="text-[10px] font-jetbrains-mono text-ash ml-2 uppercase tracking-wider">Proxy Monitor</span>
+            </div>
+            <div class="p-4 space-y-3">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-blue-cornflower animate-pulse" />
+                <span class="text-[11px] font-jetbrains-mono text-blue-cornflower uppercase tracking-wider font-medium">Live</span>
+                <span class="text-[11px] text-ash ml-auto font-jetbrains-mono">
+                  {{ new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
+                </span>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="bg-deep-coal rounded-[6px] p-3">
+                  <span class="text-[9px] font-jetbrains-mono tracking-wider text-ash uppercase">Requests</span>
+                  <div class="text-lg font-semibold text-snow mt-1 font-inter">{{ metrics?.total_requests ?? '—' }}</div>
+                </div>
+                <div class="bg-deep-coal rounded-[6px] p-3">
+                  <span class="text-[9px] font-jetbrains-mono tracking-wider text-ash uppercase">Avg Latency</span>
+                  <div class="text-lg font-semibold text-snow mt-1 font-inter">{{ metrics?.average_latency_ms.toFixed(0) ?? '—' }}ms</div>
+                </div>
+              </div>
+              <div class="h-24 bg-deep-coal rounded-[6px] flex items-end gap-1 px-3 pb-2">
+                <div v-for="i in 48" :key="i" class="flex-1 bg-blue-cornflower/30 rounded-t-[1px]" :style="{ height: (20 + Math.random() * 70) + '%' }" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading State -->
+    <div v-if="loading" class="flex items-center justify-center py-20 text-ash text-sm">
+      <div class="w-4 h-4 border-2 border-blue-cornflower/30 border-t-blue-cornflower rounded-full animate-spin mr-3" />
+      Loading analytics metrics&hellip;
+    </div>
+
+    <template v-else-if="metrics">
+      <!-- Stat Cards Row -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-card-carbon border border-steel-border rounded-lg p-5 group">
+          <svg class="w-4 h-4 text-blue-cornflower mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+          </svg>
+          <div class="text-[32px] font-semibold text-snow tracking-tight font-inter">{{ metrics.total_requests.toLocaleString() }}</div>
+          <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase mt-1 block">Total Requests</span>
         </div>
 
-        <!-- Avg Latency -->
-        <div class="bg-card-carbon border border-steel-border rounded-lg p-6">
-          <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase">AVG LATENCY</span>
-          <div class="text-4xl font-semibold text-snow mt-2 font-inter">{{ metrics.average_latency_ms.toFixed(0) }} ms</div>
+        <div class="bg-card-carbon border border-steel-border rounded-lg p-5 group">
+          <svg class="w-4 h-4 text-green-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div class="text-[32px] font-semibold text-green-400 tracking-tight font-inter">
+            {{ metrics.total_requests > 0 ? ((metrics.success_requests / metrics.total_requests) * 100).toFixed(1) : '100' }}%
+          </div>
+          <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase mt-1 block">Success Rate</span>
+        </div>
+
+        <div class="bg-card-carbon border border-steel-border rounded-lg p-5 group">
+          <svg class="w-4 h-4 text-red-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          <div class="text-[32px] font-semibold text-red-400 tracking-tight font-inter">{{ metrics.error_requests.toLocaleString() }}</div>
+          <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase mt-1 block">Errors / Blocked</span>
+        </div>
+
+        <div class="bg-card-carbon border border-steel-border rounded-lg p-5 group">
+          <svg class="w-4 h-4 text-ash mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div class="text-[32px] font-semibold text-snow tracking-tight font-inter">{{ metrics.average_latency_ms.toFixed(0) }}<span class="text-base text-ash ml-1">ms</span></div>
+          <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase mt-1 block">Avg Latency</span>
         </div>
       </div>
 
       <!-- Charts Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-card-carbon border border-steel-border rounded-lg p-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-card-carbon border border-steel-border rounded-lg p-5">
           <Chart :options="getVolumeChartOptions(metrics.volume_series)" />
         </div>
-        <div class="bg-card-carbon border border-steel-border rounded-lg p-6">
+        <div class="bg-card-carbon border border-steel-border rounded-lg p-5">
           <Chart :options="getLatencyChartOptions(metrics.latency_series)" />
         </div>
-        <div class="bg-card-carbon border border-steel-border rounded-lg p-6 lg:col-span-2">
+        <div class="bg-card-carbon border border-steel-border rounded-lg p-5 lg:col-span-2">
           <Chart :options="getStatusCodesChartOptions(metrics.status_codes_series)" />
         </div>
       </div>

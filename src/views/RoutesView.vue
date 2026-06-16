@@ -223,11 +223,12 @@ watch(useValidationMiddleware, (val) => {
     <div class="flex items-center justify-between">
       <div>
         <span class="text-caption font-jetbrains-mono tracking-caption text-blue-cornflower uppercase font-medium">ROUTING</span>
-        <h2 class="text-3xl font-semibold text-snow mt-1 tracking-tight">Proxy Routes</h2>
+        <h2 class="text-heading-sm font-semibold text-snow mt-1 tracking-tight">Proxy Routes</h2>
+        <p class="text-body-sm text-ash mt-1 max-w-lg">Configure inbound domains and path prefixes to proxy traffic to target destinations.</p>
       </div>
       <button
         @click="openAddModal"
-        class="px-4 py-2 bg-snow text-page-ink font-medium rounded-lg text-sm hover:bg-ash transition-colors cursor-pointer"
+        class="px-4 py-2.5 bg-snow text-page-ink rounded-lg text-[13px] font-semibold hover:bg-ash transition-colors cursor-pointer leading-none shrink-0"
       >
         Add Proxy Route
       </button>

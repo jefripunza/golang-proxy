@@ -21,6 +21,7 @@ defineEmits<{
       <div class="px-6 py-4 border-b border-steel-border flex items-center justify-between">
         <h3 class="text-lg font-semibold text-snow font-inter">{{ title }}</h3>
         <button
+          type="button"
           @click="$emit('close')"
           class="text-ash hover:text-snow transition-colors cursor-pointer"
         >

@@ -49,15 +49,16 @@ onMounted(() => {
     <div class="flex items-center justify-between">
       <div>
         <span class="text-caption font-jetbrains-mono tracking-caption text-blue-cornflower uppercase font-medium">TRAFFIC MONITOR</span>
-        <h2 class="text-3xl font-semibold text-snow mt-1 tracking-tight">Activity Logs</h2>
+        <h2 class="text-heading-sm font-semibold text-snow mt-1 tracking-tight">Activity Logs</h2>
+        <p class="text-body-sm text-ash mt-1 max-w-lg">Real-time request log stream. Monitor incoming traffic, status codes, and response latencies.</p>
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
         <div class="flex items-center gap-2 select-none">
-          <span class="text-xs text-ash font-jetbrains-mono uppercase">LIMIT</span>
+          <span class="text-[10px] text-ash font-jetbrains-mono uppercase tracking-wider">Limit</span>
           <select
             v-model="limit"
             @change="fetchLogs"
-            class="bg-deep-coal border border-graphite rounded-lg px-2.5 py-1 text-snow text-xs focus:outline-none focus:border-blue-cornflower transition-colors"
+            class="bg-deep-coal border border-graphite rounded-lg px-2.5 py-1.5 text-snow text-[12px] font-medium focus:outline-none focus:border-blue-cornflower transition-colors cursor-pointer"
           >
             <option :value="50">50</option>
             <option :value="100">100</option>
@@ -67,9 +68,9 @@ onMounted(() => {
         </div>
         <button
           @click="fetchLogs"
-          class="px-4 py-2 bg-transparent border border-graphite rounded-lg text-snow text-sm font-medium hover:bg-card-carbon transition-colors cursor-pointer"
+          class="px-4 py-2 border border-graphite rounded-lg text-snow text-[13px] font-medium hover:bg-card-carbon/50 transition-colors cursor-pointer"
         >
-          Refresh Logs
+          Refresh
         </button>
       </div>
     </div>

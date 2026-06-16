@@ -130,11 +130,12 @@ onMounted(fetchBlocklist)
     <div class="flex items-center justify-between">
       <div>
         <span class="text-caption font-jetbrains-mono tracking-caption text-blue-cornflower uppercase font-medium">SECURITY</span>
-        <h2 class="text-3xl font-semibold text-snow mt-1 tracking-tight">IP Block List</h2>
+        <h2 class="text-heading-sm font-semibold text-snow mt-1 tracking-tight">IP Block List</h2>
+        <p class="text-body-sm text-ash mt-1 max-w-lg">Manage blocked IP addresses. Requests from listed IPs are immediately rejected with 403.</p>
       </div>
       <button
         @click="openAddModal"
-        class="px-4 py-2 bg-snow text-page-ink font-medium rounded-lg text-sm hover:bg-ash transition-colors cursor-pointer"
+        class="px-4 py-2.5 bg-snow text-page-ink rounded-lg text-[13px] font-semibold hover:bg-ash transition-colors cursor-pointer leading-none shrink-0"
       >
         Block IP Address
       </button>

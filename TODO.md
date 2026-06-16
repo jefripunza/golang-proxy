@@ -1,7 +1,9 @@
 # Task List
 
 ## Backlog
-- 
+- Overview gunakan SSE (Server Send Event) untuk realtime
+- Proxy Routes > di antara list, jika di klik akan muncul dialog modal untuk xterm / terminal web yang realtime membaca network yang jalan di proxy itu (SSE nya akan konek ketika dialog nya muncul, jika tidak maka SSE nya di disconnect)
+- dark mode nya belum work, revisi sampai work ya
 
 ## Error / Bug
 - 
