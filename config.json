@@ -1,0 +1,19 @@
+{
+  "example.com/api/user": {
+    "to": "user.com",
+    "basicAuth": {
+      "username": "admin",
+      "password": "[PASSWORD]"
+    }
+  },
+  "example.com/api/product": {
+    "to": "product.com",
+    "basicAuth": {
+      "username": "admin",
+      "password": "[PASSWORD]"
+    }
+  },
+  "example.com": {
+    "to": "landing.com"
+  }
+}
