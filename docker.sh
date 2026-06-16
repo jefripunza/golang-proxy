@@ -48,6 +48,43 @@ if [ "$choice" = "2" ]; then
     . --push
   echo "Done: $DOCKER_HUB_REPO:latest, $DOCKER_HUB_REPO:$version_tag"
 
+  # Update Docker Hub overview from README.md
+  if [ -f "README.md" ]; then
+    read -p "Update Docker Hub repository overview from README.md? [y/N]: " update_choice
+    if [[ "$update_choice" =~ ^[Yy]$ ]]; then
+      echo "Updating Docker Hub overview..."
+      if [ -z "$DOCKER_HUB_TOKEN" ]; then
+        DOCKER_HUB_TOKEN=$(security find-internet-password -s index.docker.io -w 2>/dev/null)
+      fi
+      if [ -z "$DOCKER_HUB_TOKEN" ]; then
+        read -s -p "Enter Docker Hub Access Token: " DOCKER_HUB_TOKEN
+        echo
+      fi
+      if [ -n "$DOCKER_HUB_TOKEN" ]; then
+        token=$(curl -s -H "Content-Type: application/json" -X POST \
+          -d "{\"username\": \"$DOCKER_USERNAME\", \"password\": \"$DOCKER_HUB_TOKEN\"}" \
+          "https://hub.docker.com/v2/users/login" | jq -r '.token' 2>/dev/null)
+        if [ -n "$token" ] && [ "$token" != "null" ]; then
+          readme_content=$(cat README.md)
+          status=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH \
+            -H "Authorization: JWT $token" \
+            -H "Content-Type: application/json" \
+            -d "{\"full_description\": $(jq -Rs . <<< "$readme_content")}" \
+            "https://hub.docker.com/v2/repositories/$DOCKER_HUB_REPO/")
+          if [ "$status" -eq 200 ]; then
+            echo "Docker Hub overview updated."
+          else
+            echo "Failed to update overview (HTTP $status)."
+          fi
+        else
+          echo "Authentication failed. Skipping overview update."
+        fi
+      else
+        echo "No token provided. Skipping overview update."
+      fi
+    fi
+  fi
+
 else
   echo "Building Docker image..."
   docker build -t "$IMAGE_NAME" .
