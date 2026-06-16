@@ -34,40 +34,42 @@ func resolveRouteDB(r *http.Request) (ProxyRoute, bool) {
 	routeMu.RLock()
 	defer routeMu.RUnlock()
 
-	host := r.Host
-	if h, _, err := net.SplitHostPort(host); err == nil {
-		host = h
+	incomingHost := r.Host // e.g. "localhost:8082"
+	hostNoPort, _, err := net.SplitHostPort(incomingHost)
+	if err != nil {
+		hostNoPort = incomingHost
 	}
 
 	path := strings.TrimPrefix(r.URL.Path, "/")
-	full := host + "/" + path
 	reqPath := "/" + path
+	incomingFull := incomingHost + "/" + path
+	incomingFullNoPort := hostNoPort + "/" + path
 
 	for _, key := range routeKeys {
-		// Normalize key: strip port for host comparison
-		keyHost := key
-		keyFull := key
-		if h, p, err := net.SplitHostPort(key); err == nil {
-			_ = p
-			keyHost = h
-			if idx := strings.Index(key, "/"); idx > 0 {
-				keyFull = keyHost + key[idx:]
-			} else {
-				keyFull = keyHost
+		// 1. Exact match with port (e.g. route "localhost:8080" matches Host "localhost:8080")
+		if strings.HasPrefix(incomingFull, key) {
+			return routeConfigDB[key], true
+		}
+
+		// 2. Check whether the route key has a port
+		_, _, keyHasPort := net.SplitHostPort(key)
+		if keyHasPort == nil {
+			// Key HAS a port (e.g. "localhost:8080") — require port match
+			// Only match if incoming host + path starts with the exact key
+			if strings.HasPrefix(incomingFull, key) {
+				return routeConfigDB[key], true
+			}
+		} else {
+			// Key has NO port — strip port from incoming for comparison
+			if strings.HasPrefix(incomingFullNoPort, key) {
+				return routeConfigDB[key], true
+			}
+			if key == hostNoPort {
+				return routeConfigDB[key], true
 			}
 		}
 
-		// Full host+path prefix match (using normalized key)
-		if strings.HasPrefix(full, keyFull) {
-			return routeConfigDB[key], true
-		}
-
-		// Exact host match (port-stripped)
-		if keyHost == host {
-			return routeConfigDB[key], true
-		}
-
-		// Path-only match: extract path from key, match incoming path regardless of host
+		// 3. Path-only match: extract path from key, match incoming path regardless of host
 		if idx := strings.Index(key, "/"); idx > 0 {
 			keyPath := key[idx:]
 			if strings.HasPrefix(reqPath, keyPath+"/") || reqPath == keyPath {
@@ -344,6 +346,9 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 
 	reqBodyStr := truncateBody(reqBodyBytes, maxBody)
 	resBodyStr := truncateBody(logBuf.Bytes(), maxBody)
+
+	// Record metric (all requests, regardless of log prefix)
+	go recordRequestMetric(time.Since(startTime).Milliseconds())
 
 	// Log only if path matches one of the comma-separated prefixes (or none set)
 	if pathMatchesPrefix(r.URL.Path, route.LogPathPrefix) {

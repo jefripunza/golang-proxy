@@ -19,7 +19,7 @@ func initDB() {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 
-	err = db.AutoMigrate(&ProxyRoute{}, &ProxyLog{}, &BlockedIP{})
+	err = db.AutoMigrate(&ProxyRoute{}, &ProxyLog{}, &BlockedIP{}, &ProxyMetric{})
 	if err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
 	}

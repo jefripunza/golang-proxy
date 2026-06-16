@@ -18,6 +18,8 @@ interface LiveStats {
   success_requests: number
   error_requests: number
   average_latency_ms: number
+  volume_series: { timestamp: number; value: number }[]
+  latency_series: { timestamp: number; value: number }[]
 }
 
 const metrics = ref<Metrics | null>(null)
@@ -46,6 +48,12 @@ const connectSSE = () => {
         metrics.value.success_requests = data.success_requests
         metrics.value.error_requests = data.error_requests
         metrics.value.average_latency_ms = data.average_latency_ms
+        if (data.volume_series) {
+          metrics.value.volume_series = data.volume_series
+        }
+        if (data.latency_series) {
+          metrics.value.latency_series = data.latency_series
+        }
       }
     } catch {
       // ignore parse errors
@@ -64,9 +72,6 @@ const connectSSE = () => {
 onMounted(() => {
   fetchMetrics()
   connectSSE()
-  // Periodically refresh chart data
-  const chartInterval = setInterval(fetchMetrics, 30000)
-  return () => clearInterval(chartInterval)
 })
 
 onUnmounted(() => {

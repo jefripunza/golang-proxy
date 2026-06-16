@@ -468,11 +468,26 @@ func handleMetricsSSE(w http.ResponseWriter, r *http.Request) {
 		var avgLatency float64
 		db.Model(&ProxyLog{}).Select("COALESCE(AVG(response_time_ms), 0)").Row().Scan(&avgLatency)
 
+		// Fetch ProxyMetric data for charts (last 24 hours)
+		var metricsData []ProxyMetric
+		cutoff := time.Now().Add(-24 * time.Hour)
+		db.Where("show_at >= ?", cutoff).Order("show_at ASC").Find(&metricsData)
+
+		volumeSeries := make([]ChartDataPoint, 0, len(metricsData))
+		latencySeries := make([]ChartDataPoint, 0, len(metricsData))
+		for _, m := range metricsData {
+			ts := m.ShowAt.UnixNano() / int64(time.Millisecond)
+			volumeSeries = append(volumeSeries, ChartDataPoint{Timestamp: ts, Value: float64(m.RequestVolume)})
+			latencySeries = append(latencySeries, ChartDataPoint{Timestamp: ts, Value: m.RequestLatency})
+		}
+
 		metrics := map[string]interface{}{
 			"total_requests":     totalRequests,
 			"success_requests":   successRequests,
 			"error_requests":     errorRequests,
 			"average_latency_ms": avgLatency,
+			"volume_series":      volumeSeries,
+			"latency_series":     latencySeries,
 		}
 
 		data, err := json.Marshal(metrics)

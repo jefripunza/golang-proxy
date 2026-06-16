@@ -48,3 +48,10 @@ type BlockedIP struct {
 	IPAddress string    `gorm:"uniqueIndex" json:"ip_address"`
 	Reason    string    `json:"reason"`
 }
+
+type ProxyMetric struct {
+	ID             uint      `gorm:"primaryKey" json:"id"`
+	ShowAt         time.Time `gorm:"uniqueIndex" json:"show_at"`
+	RequestVolume  int64     `json:"request_volume"`
+	RequestLatency float64   `json:"request_latency"` // running average in ms
+}

@@ -34,6 +34,9 @@ func main() {
 	// Start rate limiter cleanup
 	go rl.cleanup()
 
+	// Start metrics worker
+	startMetricWorker()
+
 	// Load route config cache from database
 	reloadConfigCache()
 

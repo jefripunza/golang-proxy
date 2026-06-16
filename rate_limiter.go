@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type rateBucket struct {
@@ -77,6 +80,8 @@ func unitToDuration(unit string) time.Duration {
 	}
 }
 
+var rateLimitNamespace = uuid.MustParse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+
 func getRateLimitKey(r *http.Request, route ProxyRoute, clientIP string) string {
 	switch route.RateLimitMethod {
 	case "ip":
@@ -91,6 +96,12 @@ func getRateLimitKey(r *http.Request, route ProxyRoute, clientIP string) string 
 		}
 		return val
 	default:
-		return "all"
+		// compact: serialize all headers to JSON, hash with UUIDv5 for a compact unique fingerprint
+		headerMap := make(map[string]string)
+		for k, vv := range r.Header {
+			headerMap[k] = vv[0]
+		}
+		data, _ := json.Marshal(headerMap)
+		return uuid.NewSHA1(rateLimitNamespace, data).String()
 	}
 }
