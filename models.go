@@ -53,7 +53,14 @@ type ProxyMetric struct {
 	ID             uint      `gorm:"primaryKey" json:"id"`
 	ShowAt         time.Time `gorm:"uniqueIndex" json:"show_at"`
 	RequestVolume  int64     `json:"request_volume"`
-	RequestLatency float64   `json:"request_latency"` // running average in ms
+	RequestLatency float64   `json:"request_latency"`
+	MaxLatency     float64   `json:"max_latency"`
+	MinLatency     float64   `json:"min_latency"`
+}
+
+type AutoClearSetting struct {
+	ID       uint `gorm:"primaryKey" json:"id"`
+	Interval int  `json:"interval"` // hours, 0 = never
 }
 
 type RateLimitRecord struct {

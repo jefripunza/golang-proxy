@@ -81,6 +81,8 @@ func StartAdminServer(port string) {
 	// Logs
 	apiMux.HandleFunc("GET /api/logs", handleGetLogs)
 	apiMux.HandleFunc("DELETE /api/logs", handleClearLogs)
+	apiMux.HandleFunc("GET /api/logs/autoclear", handleGetAutoClear)
+	apiMux.HandleFunc("PUT /api/logs/autoclear", handleSetAutoClear)
 
 	// Metrics / Dashboard
 	apiMux.HandleFunc("GET /api/metrics", handleGetMetrics)
@@ -340,6 +342,27 @@ func handleClearLogs(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
+func handleGetAutoClear(w http.ResponseWriter, r *http.Request) {
+	var setting AutoClearSetting
+	db.First(&setting)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(setting)
+}
+
+func handleSetAutoClear(w http.ResponseWriter, r *http.Request) {
+	var setting AutoClearSetting
+	if err := json.NewDecoder(r.Body).Decode(&setting); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	var existing AutoClearSetting
+	db.First(&existing)
+	existing.Interval = setting.Interval
+	db.Save(&existing)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(existing)
+}
+
 func handleClearMetrics(w http.ResponseWriter, r *http.Request) {
 	if err := db.Where("1 = 1").Delete(&ProxyMetric{}).Error; err != nil {
 		http.Error(w, "failed to clear metrics: "+err.Error(), http.StatusInternalServerError)
@@ -478,6 +501,12 @@ func handleMetricsSSE(w http.ResponseWriter, r *http.Request) {
 		var avgLatency float64
 		db.Model(&ProxyLog{}).Select("COALESCE(AVG(response_time_ms), 0)").Row().Scan(&avgLatency)
 
+		var maxLatency float64
+		db.Model(&ProxyLog{}).Select("COALESCE(MAX(response_time_ms), 0)").Row().Scan(&maxLatency)
+
+		var minLatency float64
+		db.Model(&ProxyLog{}).Select("COALESCE(MIN(response_time_ms), 0)").Row().Scan(&minLatency)
+
 		// Fetch ProxyMetric data for charts (last 24 hours)
 		var metricsData []ProxyMetric
 		cutoff := time.Now().Add(-24 * time.Hour)
@@ -496,6 +525,8 @@ func handleMetricsSSE(w http.ResponseWriter, r *http.Request) {
 			"success_requests":   successRequests,
 			"error_requests":     errorRequests,
 			"average_latency_ms": avgLatency,
+			"max_latency_ms":     maxLatency,
+			"min_latency_ms":     minLatency,
 			"volume_series":      volumeSeries,
 			"latency_series":     latencySeries,
 		}

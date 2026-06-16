@@ -1,9 +1,6 @@
 # Task List
 
 ## Backlog
-- di halaman Logs, tambahkan dropdown untuk auto clear (tolong buatkan range nya untuk dropdown nya), dan paling terakhir di buat never untuk tidak di clear sama sekali, yang menjalankan clear nya adalah worker baru;
-- di halaman Overview, chart untuk "Request Volume" dan "Request Latency" digabung saja jadi 1 chart. lalu "Total Requests" di hapus saja. untuk "Avg Latency" di ganti "Max Latency" dan "Min Latency" (pengganti Total Requests). lalu chart yang jadi satu tadi di buat row nya 9 dan chart "Status Code Distribution" row 3 (karena cuman donut jadi kecil saja ruang nya);
-- revisi semua halaman harus bagus responsive nya, pastikan bisa di buka via HP dan Tablet;
 - 
 
 ## Error / Bug
@@ -67,3 +64,6 @@
 - [x] Clear Logs: only deletes ProxyLog table (explicit per-model)
 - [x] Clear Metrics: button on Overview + DELETE /api/metrics endpoint
 - [x] RateLimitRecord table: dedicated persistent table, immune to clear operations
+- [x] Logs auto-clear: dropdown (1h/6h/12h/24h/Never) + worker clears old ProxyLogs every minute
+- [x] Overview: merged Volume+Latency dual-axis chart, Max/Min latency cards, removed Total Requests, 9+3 grid
+- [x] Responsive: mobile sidebar overlay + backdrop, hamburger on mobile, sticky header, scrollable tables

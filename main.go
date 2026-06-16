@@ -37,6 +37,9 @@ func main() {
 	// Start metrics worker
 	startMetricWorker()
 
+	// Start auto-clear worker
+	startAutoClearWorker()
+
 	// Load route config cache from database
 	reloadConfigCache()
 

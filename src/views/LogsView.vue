@@ -22,6 +22,7 @@ const logs = ref<ProxyLog[]>([])
 const loading = ref(true)
 const limit = ref(100)
 const selectedLog = ref<ProxyLog | null>(null)
+const autoClear = ref(0) // 0 = never
 
 const fetchLogs = async () => {
   try {
@@ -32,6 +33,20 @@ const fetchLogs = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const fetchAutoClear = async () => {
+  try {
+    const res = await api.get('/api/logs/autoclear')
+    autoClear.value = res.data.interval || 0
+  } catch { /* ignore */ }
+}
+
+const setAutoClear = async (val: number) => {
+  autoClear.value = val
+  try {
+    await api.put('/api/logs/autoclear', { interval: val })
+  } catch { /* ignore */ }
 }
 
 const getStatusClass = (code: number) => {
@@ -66,6 +81,7 @@ const clearLogs = async () => {
 
 onMounted(() => {
   fetchLogs()
+  fetchAutoClear()
   const interval = setInterval(fetchLogs, 5000)
   return () => clearInterval(interval)
 })
@@ -103,10 +119,24 @@ onMounted(() => {
         <button
           type="button"
           @click="clearLogs"
-          class="px-4 py-2 border border-red-900/40 bg-red-950/10 rounded-lg text-red-400 text-[13px] font-medium hover:text-red-300 hover:bg-red-950/20 transition-colors cursor-pointer"
+          class="px-3 py-1.5 border border-red-900/40 bg-red-950/10 rounded-lg text-red-400 text-xs font-medium hover:text-red-300 hover:bg-red-950/20 transition-colors cursor-pointer"
         >
-          Clear Logs
+          Clear
         </button>
+        <div class="flex items-center gap-1.5 select-none border-l border-steel-border pl-3 ml-1">
+          <span class="text-[9px] text-ash font-jetbrains-mono uppercase tracking-wider">Auto Clear</span>
+          <select
+            :value="autoClear"
+            @change="setAutoClear(Number(($event.target as HTMLSelectElement).value))"
+            class="bg-deep-coal border border-graphite rounded-lg px-2 py-1.5 text-snow text-[11px] font-medium focus:outline-none focus:border-blue-cornflower transition-colors cursor-pointer"
+          >
+            <option :value="0">Never</option>
+            <option :value="1">1 Hour</option>
+            <option :value="6">6 Hours</option>
+            <option :value="12">12 Hours</option>
+            <option :value="24">24 Hours</option>
+          </select>
+        </div>
       </div>
     </div>
 
