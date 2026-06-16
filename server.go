@@ -72,6 +72,8 @@ func StartAdminServer(port string) {
 	apiMux.HandleFunc("POST /api/routes", handleCreateRoute)
 	apiMux.HandleFunc("PUT /api/routes/{id}", handleUpdateRoute)
 	apiMux.HandleFunc("DELETE /api/routes/{id}", handleDeleteRoute)
+	apiMux.HandleFunc("GET /api/fallback", handleGetFallback)
+	apiMux.HandleFunc("PUT /api/fallback", handleSetFallback)
 
 	// Blocklist CRUD
 	apiMux.HandleFunc("GET /api/blocklist", handleGetBlocklist)
@@ -261,6 +263,29 @@ func handleDeleteRoute(w http.ResponseWriter, r *http.Request) {
 	reloadConfigCache()
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func handleGetFallback(w http.ResponseWriter, r *http.Request) {
+	var fb FallbackRoute
+	db.First(&fb)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(fb)
+}
+
+func handleSetFallback(w http.ResponseWriter, r *http.Request) {
+	var fb FallbackRoute
+	if err := json.NewDecoder(r.Body).Decode(&fb); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	var existing FallbackRoute
+	db.First(&existing)
+	existing.SchemaType = fb.SchemaType
+	existing.TargetURL = fb.TargetURL
+	existing.DynamicResolveURL = fb.DynamicResolveURL
+	db.Save(&existing)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(existing)
 }
 
 // ─── Blocklist Handlers ───────────────────────────────────────────────────────

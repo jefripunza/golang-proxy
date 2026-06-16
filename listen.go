@@ -222,10 +222,21 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 	// 2. Resolve Route configuration
 	route, ok := resolveRouteDB(r)
 	if !ok {
-		msg := "no route matched for " + r.Host + r.URL.Path
-		http.Error(w, msg, http.StatusBadGateway)
-		logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, msg, "", "", "", "")
-		return
+		// Check fallback route
+		var fb FallbackRoute
+		db.First(&fb)
+		if fb.TargetURL != "" {
+			route = ProxyRoute{
+				SchemaType:        fb.SchemaType,
+				TargetURL:         fb.TargetURL,
+				DynamicResolveURL: fb.DynamicResolveURL,
+			}
+		} else {
+			msg := "no route matched for " + r.Host + r.URL.Path
+			http.Error(w, msg, http.StatusBadGateway)
+			logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusBadGateway, time.Since(startTime), clientIP, msg, "", "", "", "")
+			return
+		}
 	}
 
 	targetURL := route.TargetURL

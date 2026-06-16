@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import api from '@/services/api'
 import Chart from '@/components/common/Chart.vue'
+
+const route = useRoute()
 
 interface Metrics {
   total_requests: number
@@ -124,6 +127,14 @@ const getStatusCodesChartOptions = (seriesData: { name: string; value: number }[
 
 onMounted(() => { fetchMetrics(); connectSSE() })
 onUnmounted(() => { eventSource?.close() })
+
+// Re-fetch and show skeleton when navigating back to this page
+watch(() => route.path, (path) => {
+  if (path === '/dashboard') {
+    loading.value = true
+    fetchMetrics()
+  }
+})
 </script>
 
 <template>
@@ -136,8 +147,24 @@ onUnmounted(() => { eventSource?.close() })
       <button type="button" @click="clearMetrics" class="px-3 py-1.5 border border-red-900/40 bg-red-950/10 rounded-lg text-red-400 text-xs font-medium hover:text-red-300 hover:bg-red-950/20 transition-colors cursor-pointer">Clear Metrics</button>
     </div>
 
-    <div v-if="loading" class="flex items-center justify-center py-16 text-ash text-sm">
-      <div class="w-4 h-4 border-2 border-blue-cornflower/30 border-t-blue-cornflower rounded-full animate-spin mr-3" />Loading&hellip;
+    <!-- Skeleton Loading -->
+    <div v-if="loading" class="space-y-6">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div v-for="i in 5" :key="i" class="bg-card-carbon border border-steel-border rounded-lg p-4 animate-pulse">
+          <div class="h-2.5 bg-deep-coal rounded w-16 mb-3" />
+          <div class="h-6 bg-deep-coal rounded w-20" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div class="lg:col-span-9 bg-card-carbon border border-steel-border rounded-lg p-4 animate-pulse">
+          <div class="h-4 bg-deep-coal rounded w-48 mb-4" />
+          <div class="h-[280px] bg-deep-coal rounded" />
+        </div>
+        <div class="lg:col-span-3 bg-card-carbon border border-steel-border rounded-lg p-4 animate-pulse">
+          <div class="h-4 bg-deep-coal rounded w-24 mb-4" />
+          <div class="h-[180px] bg-deep-coal rounded" />
+        </div>
+      </div>
     </div>
 
     <template v-else-if="metrics">

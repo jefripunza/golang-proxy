@@ -19,7 +19,7 @@ func initDB() {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 
-	err = db.AutoMigrate(&ProxyRoute{}, &ProxyLog{}, &BlockedIP{}, &ProxyMetric{}, &RateLimitRecord{}, &AutoClearSetting{})
+	err = db.AutoMigrate(&ProxyRoute{}, &ProxyLog{}, &BlockedIP{}, &ProxyMetric{}, &RateLimitRecord{}, &AutoClearSetting{}, &FallbackRoute{})
 	// Ensure default auto-clear setting exists
 	var count int64
 	db.Model(&AutoClearSetting{}).Count(&count)

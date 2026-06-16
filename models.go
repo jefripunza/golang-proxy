@@ -63,6 +63,13 @@ type AutoClearSetting struct {
 	Interval int  `json:"interval"` // hours, 0 = never
 }
 
+type FallbackRoute struct {
+	ID                uint   `gorm:"primaryKey" json:"id"`
+	SchemaType        string `json:"schema_type"`
+	TargetURL         string `json:"target_url"`
+	DynamicResolveURL string `json:"dynamic_resolve_url"`
+}
+
 type RateLimitRecord struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	CreatedAt time.Time `json:"created_at"`

@@ -71,3 +71,7 @@
 - [x] Charts: disable all animations + shared tooltip on dual-axis Volume/Latency chart
 - [x] Overview: all decimal values to 2 places (success rate, latency)
 - [x] Overview: increased chart title margins (24px combined, 20px donut)
+- [x] 404 Fallback route: catch-all when no route matches, configurable via dialog (static/dynamic)
+- [x] Fix sidebar z-index: z-30 (below z-50/60 modal overlays)
+- [x] Overview: skeleton loading animation for cards + charts on first load
+- [x] Overview: skeleton re-triggers on navigation via route watch + loading reset

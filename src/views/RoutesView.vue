@@ -40,6 +40,38 @@ const openTerminal = (route: ProxyRoute) => {
   showTerminal.value = true
 }
 
+// Fallback route
+const showFallbackModal = ref(false)
+const fbSchemaType = ref<'static' | 'dynamic'>('static')
+const fbTargetUrl = ref('')
+const fbDynamicResolveUrl = ref('')
+
+const fetchFallback = async () => {
+  try {
+    const res = await api.get('/api/fallback')
+    fbSchemaType.value = res.data.schema_type || 'static'
+    fbTargetUrl.value = res.data.target_url || ''
+    fbDynamicResolveUrl.value = res.data.dynamic_resolve_url || ''
+  } catch { /* ignore */ }
+}
+
+const openFallbackModal = () => {
+  showFallbackModal.value = true
+}
+
+const saveFallback = async () => {
+  try {
+    await api.put('/api/fallback', {
+      schema_type: fbSchemaType.value,
+      target_url: fbTargetUrl.value,
+      dynamic_resolve_url: fbDynamicResolveUrl.value,
+    })
+    showFallbackModal.value = false
+  } catch (err) {
+    console.error('Failed to save fallback:', err)
+  }
+}
+
 // Form Fields
 const domain = ref('')
 const schemaType = ref<'static' | 'dynamic'>('static')
@@ -236,7 +268,7 @@ const handleDelete = async (id: number) => {
   }
 }
 
-onMounted(fetchRoutes)
+onMounted(() => { fetchRoutes(); fetchFallback() })
 
 // Clear conditional field errors when schema type or middleware toggle changes
 watch(schemaType, () => {
@@ -266,12 +298,22 @@ watch(useValidationMiddleware, (val) => {
         <h2 class="text-heading-sm font-semibold text-snow mt-1 tracking-tight">Proxy Routes</h2>
         <p class="text-body-sm text-ash mt-1 max-w-lg">Configure inbound domains and path prefixes to proxy traffic to target destinations.</p>
       </div>
-      <button
-        @click="openAddModal"
-        class="px-4 py-2.5 bg-snow text-page-ink rounded-lg text-[13px] font-semibold hover:bg-ash transition-colors cursor-pointer leading-none shrink-0"
-      >
-        Add Proxy Route
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          @click="openFallbackModal"
+          class="px-4 py-2.5 border border-graphite rounded-lg text-snow text-[13px] font-medium hover:bg-card-carbon/50 transition-colors cursor-pointer leading-none shrink-0"
+        >
+          404 Fallback
+        </button>
+        <button
+          type="button"
+          @click="openAddModal"
+          class="px-4 py-2.5 bg-snow text-page-ink rounded-lg text-[13px] font-semibold hover:bg-ash transition-colors cursor-pointer leading-none shrink-0"
+        >
+          Add Proxy Route
+        </button>
+      </div>
     </div>
 
     <!-- Routes List -->
@@ -540,6 +582,29 @@ watch(useValidationMiddleware, (val) => {
         >
           Save Route
         </button>
+      </template>
+    </Modal>
+
+    <!-- Fallback Modal -->
+    <Modal :show="showFallbackModal" title="404 Fallback Route" @close="showFallbackModal = false">
+      <div class="space-y-4">
+        <p class="text-body-sm text-ash">When no route matches an incoming request, forward it to this target.</p>
+        <FormField label="Routing Scheme" id="fbSchemaType">
+          <select v-model="fbSchemaType" id="fbSchemaType" class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors">
+            <option value="static">Static (Direct URL)</option>
+            <option value="dynamic">Dynamic (External Resolver)</option>
+          </select>
+        </FormField>
+        <FormField v-if="fbSchemaType === 'static'" label="Target Host / Destination URL" id="fbTargetUrl">
+          <input v-model="fbTargetUrl" type="text" id="fbTargetUrl" class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors" placeholder="https://fallback.example.com" />
+        </FormField>
+        <FormField v-if="fbSchemaType === 'dynamic'" label="Dynamic Resolver Endpoint" id="fbDynamicResolveUrl">
+          <input v-model="fbDynamicResolveUrl" type="text" id="fbDynamicResolveUrl" class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors" placeholder="https://api.example.com/resolve-fallback" />
+        </FormField>
+      </div>
+      <template #footer>
+        <button type="button" @click="showFallbackModal = false" class="px-4 py-2 border border-graphite rounded-lg text-snow text-sm font-medium hover:bg-card-carbon transition-colors cursor-pointer">Cancel</button>
+        <button type="button" @click="saveFallback" class="px-4 py-2 bg-snow text-page-ink font-medium rounded-lg text-sm hover:bg-ash transition-colors cursor-pointer">Save</button>
       </template>
     </Modal>
 

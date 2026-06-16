@@ -87,7 +87,7 @@ onMounted(() => {
 
       <!-- Sidebar -->
       <aside
-        class="border-r border-steel-border/60 bg-deep-coal flex flex-col shrink-0 select-none transition-all duration-200 overflow-hidden z-40
+        class="border-r border-steel-border/60 bg-deep-coal flex flex-col shrink-0 select-none transition-all duration-200 overflow-hidden z-30
           fixed inset-y-0 left-0 lg:relative lg:inset-auto"
         :class="sidebarOpen ? '' : '-translate-x-full lg:translate-x-0'"
         :style="sidebarOpen
