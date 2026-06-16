@@ -4,10 +4,9 @@ import { ref, onMounted } from 'vue'
 const showAnnouncement = ref(true)
 const isDarkMode = ref(true)
 
-const toggleDarkMode = () => {
-  isDarkMode.value = !isDarkMode.value
+const applyTheme = (dark: boolean) => {
   const html = document.documentElement
-  if (isDarkMode.value) {
+  if (dark) {
     html.classList.add('dark')
     html.classList.remove('light')
   } else {
@@ -16,19 +15,28 @@ const toggleDarkMode = () => {
   }
 }
 
+const toggleDarkMode = () => {
+  isDarkMode.value = !isDarkMode.value
+  applyTheme(isDarkMode.value)
+  localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light')
+}
+
 const navItems = [
-  { name: 'Product', disabled: true, path: '/dashboard' },
-  { name: 'Overview', disabled: false, path: '/dashboard' },
-  { name: 'Routes', disabled: false, path: '/routes' },
-  { name: 'Block List', disabled: false, path: '/blocklist' },
-  { name: 'Logs', disabled: false, path: '/logs' },
-  { name: 'Settings', disabled: false, path: '/settings' },
+  { name: 'Overview', path: '/dashboard', icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z' },
+  { name: 'Routes', path: '/routes', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
+  { name: 'Block List', path: '/blocklist', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
+  { name: 'Logs', path: '/logs', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
 ]
 
-const trustLogos = ['Shopify', 'AWS', 'Atlassian', 'Notion', 'Canva', 'Lovable']
-
 onMounted(() => {
-  document.documentElement.classList.add('dark')
+  const saved = localStorage.getItem('theme')
+  if (saved === 'light') {
+    isDarkMode.value = false
+    applyTheme(false)
+  } else {
+    isDarkMode.value = true
+    applyTheme(true)
+  }
 })
 </script>
 
@@ -37,15 +45,14 @@ onMounted(() => {
     <!-- Announcement Bar -->
     <div
       v-if="showAnnouncement"
-      class="relative w-full bg-blue-cornflower flex items-center justify-center gap-3 py-2 px-4 z-50 select-none"
+      class="relative w-full bg-blue-cornflower flex items-center justify-center gap-2.5 py-1.5 px-4 z-50 select-none"
     >
-      <div class="flex items-center gap-2">
-        <div class="flex -space-x-1.5">
-          <div class="w-4 h-4 rounded-full bg-white/30 border border-white/20" />
-          <div class="w-4 h-4 rounded-full bg-white/30 border border-white/20" />
-          <div class="w-4 h-4 rounded-full bg-white/30 border border-white/20" />
-        </div>
-        <span class="text-[11px] font-inter font-medium uppercase tracking-wider text-white">
+      <div class="flex items-center gap-2.5">
+        <svg width="18" height="12" viewBox="0 0 18 12" fill="none" class="shrink-0">
+          <ellipse cx="5" cy="6" rx="4" ry="5" fill="white" opacity="0.5" />
+          <ellipse cx="12" cy="6" rx="4" ry="5" fill="white" opacity="0.3" />
+        </svg>
+        <span class="text-[11px] font-inter font-semibold uppercase tracking-wider text-white">
           The best never guess &mdash; proxy command center live
         </span>
       </div>
@@ -54,53 +61,15 @@ onMounted(() => {
         @click="showAnnouncement = false"
         class="absolute right-3 w-5 h-5 flex items-center justify-center rounded-[4px] text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </button>
     </div>
 
-    <!-- Header / Nav -->
-    <header class="h-16 border-b border-steel-border/60 bg-page-ink/80 backdrop-blur-sm flex items-center justify-between px-8 sticky top-0 z-40 select-none">
-      <div class="flex items-center gap-8">
-        <!-- Logo -->
-        <div class="flex items-center gap-2.5">
-          <svg width="24" height="24" viewBox="0 0 32 32" fill="none" class="shrink-0">
-            <rect width="32" height="32" rx="8" fill="#6798ff" />
-            <path d="M8 22V10l8 6-8 6z" fill="#0a0a0a" />
-            <path d="M18 22V10l8 6-8 6z" fill="#0a0a0a" opacity="0.6"/>
-          </svg>
-          <span class="text-[15px] font-semibold text-snow tracking-tight">Dovetail</span>
-        </div>
-
-        <!-- Pill Nav - Center -->
-        <nav class="hidden md:flex items-center gap-1">
-          <template v-for="item in navItems" :key="item.name">
-            <button
-              v-if="item.disabled"
-              type="button"
-              disabled
-              class="px-3.5 py-1.5 rounded-full text-[13px] font-medium text-fog cursor-not-allowed select-none"
-            >
-              {{ item.name }}
-            </button>
-            <router-link
-              v-else
-              :to="item.path"
-              class="px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all duration-150 select-none"
-              :class="
-                $route.path === item.path
-                  ? 'bg-card-carbon text-blue-cornflower'
-                  : 'text-ash hover:text-snow hover:bg-card-carbon/50'
-              "
-            >
-              {{ item.name }}
-            </router-link>
-          </template>
-        </nav>
-      </div>
-
-      <!-- Right Actions -->
+    <!-- Header -->
+    <header class="h-16 border-b border-steel-border/60 bg-page-ink/80 backdrop-blur-sm flex items-center justify-between px-6 sticky top-0 z-40 select-none shrink-0">
+      <div />
       <div class="flex items-center gap-3">
         <button
           type="button"
@@ -118,62 +87,60 @@ onMounted(() => {
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
           </svg>
         </button>
-        <span class="text-[13px] text-ash font-medium hidden sm:inline select-none">Admin</span>
+        <span class="text-[13px] text-ash font-medium select-none">Admin</span>
         <div class="w-7 h-7 rounded-full bg-card-carbon border border-steel-border flex items-center justify-center select-none">
           <span class="text-[11px] font-semibold text-snow">A</span>
         </div>
       </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 max-w-[1200px] w-full mx-auto px-6 sm:px-8 py-10 relative z-10">
-      <router-view />
-    </main>
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Sidebar -->
+      <aside
+        class="border-r border-steel-border/60 bg-deep-coal/50 flex flex-col shrink-0 select-none"
+        style="width: 228px; min-width: 228px; max-width: 228px; flex: 0 0 228px;"
+      >
+        <!-- Logo in sidebar -->
+        <div class="flex items-center gap-2.5 px-4 pt-5 pb-3">
+          <svg width="24" height="24" viewBox="0 0 32 32" fill="none" class="shrink-0">
+            <rect width="32" height="32" rx="8" fill="#6798ff" />
+            <path d="M8 22V10l8 6-8 6z" fill="#0a0a0a" />
+            <path d="M18 22V10l8 6-8 6z" fill="#0a0a0a" opacity="0.6" />
+          </svg>
+          <span class="text-[15px] font-semibold text-snow tracking-tight">Golang Proxy</span>
+        </div>
 
-    <!-- Footer Trust Bar -->
-    <footer class="border-t border-steel-border/40 py-10 px-8 select-none relative z-10">
-      <div class="max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-6">
-        <div class="flex flex-col items-center lg:items-start gap-3">
-          <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase">
-            Connecting the world&rsquo;s leading companies to their customers
-          </span>
-          <div class="flex items-center gap-6 opacity-50">
-            <span
-              v-for="logo in trustLogos"
-              :key="logo"
-              class="text-[12px] font-semibold text-ash tracking-wider uppercase select-none"
+        <!-- Nav items -->
+        <nav class="flex flex-col gap-0.5 px-3 pb-5">
+          <router-link
+            v-for="item in navItems"
+            :key="item.path"
+            :to="item.path"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-full text-[13px] font-medium transition-all duration-150 select-none border"
+            :class="
+              $route.path === item.path
+                ? 'border-blue-cornflower/40 bg-blue-cornflower/5 text-blue-cornflower'
+                : 'border-transparent text-ash hover:text-snow hover:bg-card-carbon/40'
+            "
+          >
+            <svg
+              width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              style="width: 17px; height: 17px; min-width: 17px; min-height: 17px; flex-shrink: 0;"
             >
-              {{ logo }}
-            </span>
-          </div>
+              <path :d="item.icon" />
+            </svg>
+            <span class="whitespace-nowrap">{{ item.name }}</span>
+          </router-link>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="flex-1 overflow-y-auto bg-page-ink relative z-10">
+        <div class="max-w-[1200px] mx-auto px-6 py-8">
+          <router-view />
         </div>
-        <div class="flex items-center gap-8">
-          <div class="flex flex-col items-end gap-0.5">
-            <div class="flex items-center gap-0.5">
-              <svg v-for="i in 4" :key="'g2-'+i" width="12" height="12" viewBox="0 0 24 24" fill="#ffffff">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-              <svg width="12" height="12" viewBox="0 0 24 24" class="opacity-50">
-                <defs><linearGradient id="half-star"><stop offset="50%" stop-color="#ffffff"/><stop offset="50%" stop-color="transparent"/></linearGradient></defs>
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="url(#half-star)" stroke="#ffffff" stroke-width="0.5"/>
-              </svg>
-            </div>
-            <span class="text-[10px] text-ash font-inter">4.5/5 G2</span>
-          </div>
-          <div class="flex flex-col items-end gap-0.5">
-            <div class="flex items-center gap-0.5">
-              <svg v-for="i in 4" :key="'cap-'+i" width="12" height="12" viewBox="0 0 24 24" fill="#ffffff">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-              <svg width="12" height="12" viewBox="0 0 24 24" class="opacity-50">
-                <defs><linearGradient id="half-star-cap"><stop offset="50%" stop-color="#ffffff"/><stop offset="50%" stop-color="transparent"/></linearGradient></defs>
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="url(#half-star-cap)" stroke="#ffffff" stroke-width="0.5"/>
-              </svg>
-            </div>
-            <span class="text-[10px] text-ash font-inter">4.6/5 Capterra</span>
-          </div>
-        </div>
-      </div>
-    </footer>
+      </main>
+    </div>
   </div>
 </template>

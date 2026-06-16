@@ -1,9 +1,11 @@
 # Task List
 
 ## Backlog
-- Overview gunakan SSE (Server Send Event) untuk realtime
-- Proxy Routes > di antara list, jika di klik akan muncul dialog modal untuk xterm / terminal web yang realtime membaca network yang jalan di proxy itu (SSE nya akan konek ketika dialog nya muncul, jika tidak maka SSE nya di disconnect)
-- dark mode nya belum work, revisi sampai work ya
+- di sidebar, paling atas ada logo dan nama aplikasi, itu di pindahkan paling atas saja, sekarang jelek banget, dan ada button burger untuk expand sidebar
+- di header dashboard ada tulisan admin dan bulat A, hapus aja, sisakan toggle dark mode
+- di halaman Overview, ada card dengan tulisan "Get total clarity from your proxy traffic" itu juga di hapus beserta tombol refresh dan view
+- halaman Routes, di tombol untuk show xterm itu pindah jadi button di kolom action, di button nya ada icon terminal ya biar asik
+- 
 
 ## Error / Bug
 - 
@@ -34,3 +36,17 @@
 - [x] Set up Axios service client with basic auth interceptor
 - [x] Implement navigation layout (Overview, Proxy Routes, IP Block List, Activity Logs, Settings)
 - [x] Build visual analytics dashboard using Highcharts
+- [x] Fix dark mode toggle — localStorage persistence + light theme CSS
+- [x] Overview SSE real-time — replace polling with Server-Sent Events for live stats
+- [x] Proxy Routes terminal — click route to open xterm.js live traffic monitor via per-route SSE
+- [x] Restore left sidebar layout (remove horizontal pill nav)
+- [x] Remove footer trust bar
+- [x] Remove "Product" nav placeholder
+- [x] Rename title to "Golang Proxy"
+- [x] Remove Settings page and route
+- [x] Fix Overview SSE with EventSource + withCredentials
+- [x] Polish announcement bar — double-oval icon + "THE BEST NEVER GUESS" text
+- [x] Move logo (abstract right-arrow) to sidebar top, simplify header to just theme toggle + avatar
+- [x] Sidebar nav: active pill-outline style (blue border + subtle bg, rounded-full)
+- [x] Simplify nav labels: Overview / Routes / Block List / Logs
+- [x] Update page headings to match nav labels

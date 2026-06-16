@@ -4,6 +4,7 @@ import { z } from 'zod'
 import api from '@/services/api'
 import Modal from '@/components/common/Modal.vue'
 import FormField from '@/components/common/FormField.vue'
+import TerminalModal from '@/components/common/TerminalModal.vue'
 
 interface ProxyRoute {
   id: number
@@ -23,6 +24,15 @@ const routes = ref<ProxyRoute[]>([])
 const showModal = ref(false)
 const editingRoute = ref<ProxyRoute | null>(null)
 const loading = ref(true)
+
+// Terminal monitor
+const showTerminal = ref(false)
+const terminalRoute = ref<{ id: number; domain: string } | null>(null)
+
+const openTerminal = (route: ProxyRoute) => {
+  terminalRoute.value = { id: route.id, domain: route.domain }
+  showTerminal.value = true
+}
 
 // Form Fields
 const domain = ref('')
@@ -256,7 +266,11 @@ watch(useValidationMiddleware, (val) => {
         </thead>
         <tbody class="divide-y divide-steel-border text-sm text-snow">
           <tr v-for="route in routes" :key="route.id" class="hover:bg-deep-coal/50 transition-colors">
-            <td class="px-6 py-4 font-semibold font-jetbrains-mono text-blue-cornflower">{{ route.domain }}</td>
+            <td
+              class="px-6 py-4 font-semibold font-jetbrains-mono text-blue-cornflower cursor-pointer hover:underline"
+              @click="openTerminal(route)"
+              title="Click to monitor live traffic"
+            >{{ route.domain }}</td>
             <td class="px-6 py-4">
               <span
                 class="px-2 py-0.5 rounded-[4px] text-[10px] font-jetbrains-mono font-medium uppercase tracking-wider"
@@ -418,5 +432,14 @@ watch(useValidationMiddleware, (val) => {
         </button>
       </template>
     </Modal>
+
+    <!-- Terminal Monitor Modal -->
+    <TerminalModal
+      v-if="terminalRoute"
+      :show="showTerminal"
+      :route-id="terminalRoute.id"
+      :domain="terminalRoute.domain"
+      @close="showTerminal = false"
+    />
   </div>
 </template>

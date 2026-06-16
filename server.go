@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"embed"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/fs"
 	"log"
@@ -82,6 +83,10 @@ func StartAdminServer(port string) {
 
 	// Metrics / Dashboard
 	apiMux.HandleFunc("GET /api/metrics", handleGetMetrics)
+	apiMux.HandleFunc("GET /api/metrics/stream", handleMetricsSSE)
+
+	// Per-route traffic SSE stream
+	apiMux.HandleFunc("GET /api/routes/{id}/stream", handleRouteStreamSSE)
 
 	// Register API with Basic Auth
 	mux.Handle("/api/", basicAuthMiddleware(apiMux))
@@ -414,4 +419,138 @@ func handleGetMetrics(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(metrics)
+}
+
+// handleMetricsSSE streams dashboard metrics via Server-Sent Events
+func handleMetricsSSE(w http.ResponseWriter, r *http.Request) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "SSE not supported", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	ticker := time.NewTicker(3 * time.Second)
+	defer ticker.Stop()
+
+	ctx := r.Context()
+
+	sendMetrics := func() bool {
+		var totalRequests int64
+		db.Model(&ProxyLog{}).Count(&totalRequests)
+
+		var successRequests int64
+		db.Model(&ProxyLog{}).Where("status_code >= 200 AND status_code < 300").Count(&successRequests)
+
+		var errorRequests int64
+		db.Model(&ProxyLog{}).Where("status_code >= 400 OR status_code == 0").Count(&errorRequests)
+
+		var avgLatency float64
+		db.Model(&ProxyLog{}).Select("COALESCE(AVG(response_time_ms), 0)").Row().Scan(&avgLatency)
+
+		metrics := map[string]interface{}{
+			"total_requests":     totalRequests,
+			"success_requests":   successRequests,
+			"error_requests":     errorRequests,
+			"average_latency_ms": avgLatency,
+		}
+
+		data, err := json.Marshal(metrics)
+		if err != nil {
+			return false
+		}
+
+		_, err = fmt.Fprintf(w, "data: %s\n\n", data)
+		if err != nil {
+			return false
+		}
+		flusher.Flush()
+		return true
+	}
+
+	if !sendMetrics() {
+		return
+	}
+
+	for {
+		select {
+		case <-ticker.C:
+			if !sendMetrics() {
+				return
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+// handleRouteStreamSSE streams live request logs for a specific route
+func handleRouteStreamSSE(w http.ResponseWriter, r *http.Request) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "SSE not supported", http.StatusInternalServerError)
+		return
+	}
+
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	var route ProxyRoute
+	if err := db.First(&route, id).Error; err != nil {
+		http.Error(w, "route not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	ctx := r.Context()
+	var lastID uint
+
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	sendLogs := func() bool {
+		var logs []ProxyLog
+		if err := db.Where("domain = ? AND id > ?", route.Domain, lastID).Order("id ASC").Limit(50).Find(&logs).Error; err != nil {
+			return false
+		}
+
+		for _, l := range logs {
+			data, err := json.Marshal(l)
+			if err != nil {
+				continue
+			}
+			_, err = fmt.Fprintf(w, "data: %s\n\n", data)
+			if err != nil {
+				return false
+			}
+			lastID = l.ID
+		}
+		flusher.Flush()
+		return true
+	}
+
+	sendLogs()
+
+	for {
+		select {
+		case <-ticker.C:
+			if !sendLogs() {
+				return
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
 }

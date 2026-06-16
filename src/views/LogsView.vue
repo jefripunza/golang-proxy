@@ -49,7 +49,7 @@ onMounted(() => {
     <div class="flex items-center justify-between">
       <div>
         <span class="text-caption font-jetbrains-mono tracking-caption text-blue-cornflower uppercase font-medium">TRAFFIC MONITOR</span>
-        <h2 class="text-heading-sm font-semibold text-snow mt-1 tracking-tight">Activity Logs</h2>
+        <h2 class="text-heading-sm font-semibold text-snow mt-1 tracking-tight">Logs</h2>
         <p class="text-body-sm text-ash mt-1 max-w-lg">Real-time request log stream. Monitor incoming traffic, status codes, and response latencies.</p>
       </div>
       <div class="flex items-center gap-3">

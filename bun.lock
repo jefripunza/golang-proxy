@@ -7,6 +7,7 @@
       "dependencies": {
         "@tailwindcss/vite": "^4.3.1",
         "@tanstack/vue-query": "^5.101.0",
+        "@xterm/xterm": "^6.0.0",
         "axios": "^1.18.0",
         "highcharts": "^13.0.0",
         "highcharts-vue": "^2.0.1",
@@ -357,6 +358,8 @@
     "@vue/shared": ["@vue/shared@3.6.0-beta.15", "", {}, "sha512-wyjMjw2AmP6h9qNpVZAO77rgxd6+jcMu+2Wmg9729mmR+V5HPweBSKWggioSNR6NBazMMGY4ekb5U9DUp1KRFg=="],
 
     "@vue/tsconfig": ["@vue/tsconfig@0.9.1", "", { "peerDependencies": { "typescript": ">= 5.8", "vue": "^3.4.0" }, "optionalPeers": ["typescript", "vue"] }, "sha512-buvjm+9NzLCJL29KY1j1991YYJ5e6275OiK+G4jtmfIb+z4POywbdm0wXusT9adVWqe0xqg70TbI7+mRx4uU9w=="],
+
+    "@xterm/xterm": ["@xterm/xterm@6.0.0", "", {}, "sha512-TQwDdQGtwwDt+2cgKDLn0IRaSxYu1tSUjgKarSDkUM0ZNiSRXFpjxEsvc/Zgc5kq5omJ+V0a8/kIM2WD3sMOYg=="],
 
     "acorn": ["acorn@8.17.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg=="],
 

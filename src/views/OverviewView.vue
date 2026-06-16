@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
 import Chart from '@/components/common/Chart.vue'
@@ -16,8 +16,16 @@ interface Metrics {
   status_codes_series: { name: string; value: number }[]
 }
 
+interface LiveStats {
+  total_requests: number
+  success_requests: number
+  error_requests: number
+  average_latency_ms: number
+}
+
 const metrics = ref<Metrics | null>(null)
 const loading = ref(true)
+let eventSource: EventSource | null = null
 
 const fetchMetrics = async () => {
   try {
@@ -30,10 +38,42 @@ const fetchMetrics = async () => {
   }
 }
 
+const connectSSE = () => {
+  if (eventSource) return
+  eventSource = new EventSource('/api/metrics/stream', { withCredentials: true })
+  eventSource.onmessage = (event) => {
+    try {
+      const data: LiveStats = JSON.parse(event.data)
+      if (metrics.value) {
+        metrics.value.total_requests = data.total_requests
+        metrics.value.success_requests = data.success_requests
+        metrics.value.error_requests = data.error_requests
+        metrics.value.average_latency_ms = data.average_latency_ms
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }
+  eventSource.onopen = () => {
+    if (loading.value) loading.value = false
+  }
+  eventSource.onerror = () => {
+    eventSource?.close()
+    eventSource = null
+    setTimeout(connectSSE, 3000)
+  }
+}
+
 onMounted(() => {
   fetchMetrics()
-  const interval = setInterval(fetchMetrics, 10000)
-  return () => clearInterval(interval)
+  connectSSE()
+  // Periodically refresh chart data
+  const chartInterval = setInterval(fetchMetrics, 30000)
+  return () => clearInterval(chartInterval)
+})
+
+onUnmounted(() => {
+  eventSource?.close()
 })
 
 const getVolumeChartOptions = (seriesData: { timestamp: number; value: number }[]): Highcharts.Options => ({

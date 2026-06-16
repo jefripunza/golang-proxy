@@ -2,8 +2,8 @@
 @import 'tailwindcss';
 
 html, body, #app {
-  background-color: #0a0a0a;
-  color: #ffffff;
+  background-color: var(--color-page-ink, #0a0a0a);
+  color: var(--color-snow, #ffffff);
   font-family: 'Inter', sans-serif;
   margin: 0;
   padding: 0;
@@ -23,6 +23,12 @@ body::before {
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 70%);
   -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 70%);
+}
+
+.light body::before {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
 }
 
 #app {
@@ -76,4 +82,16 @@ body::before {
   --radius-md: 4px;
   --radius-lg: 8px;
   --radius-full: 66px;
+}
+
+.light {
+  --color-page-ink: #f5f5f5;
+  --color-card-carbon: #ffffff;
+  --color-deep-coal: #f0f0f0;
+  --color-onyx: #e0e0e0;
+  --color-steel-border: #e0e0e0;
+  --color-graphite: #d0d0d0;
+  --color-fog: #999999;
+  --color-ash: #666666;
+  --color-snow: #1a1a1a;
 }

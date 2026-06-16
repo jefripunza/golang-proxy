@@ -12,5 +12,5 @@ ending credit 4: 2518 # baru bener di bantu dengan Gemini 3.5 Flash (high)
 start credit: 4.75
 ending credit 1: 4.71 # revisi todo > finish
 ending credit 2: 4.69 # fixing bug proxy
-ending credit 3: # redesign UI > implement
+ending credit 3: 4.63 # redesign UI > implement
 ending credit 4: # 
