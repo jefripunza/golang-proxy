@@ -57,8 +57,6 @@ else
 
   echo "Starting container..."
   docker run -d \
-    -p 80:80 \
-    -p 443:443 \
     -p "$LISTEN_PORT:8080" \
     -p "$SERVER_PORT:8000" \
     -e LISTEN_PORT="$LISTEN_PORT" \
