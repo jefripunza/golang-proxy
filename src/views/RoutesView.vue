@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { z } from 'zod'
 import api from '@/services/api'
 import Modal from '@/components/common/Modal.vue'
@@ -54,6 +54,42 @@ const routeSchema = z.object({
     message: 'A valid validation middleware URL (starting with http) is required'
   })
 })
+
+const fieldSchemas: Record<string, z.ZodSchema> = {
+  domain: z.string().min(1, 'Domain is required').regex(/^[a-zA-Z0-9.-]+(:\d+)?(\/.*)?$/, 'Invalid domain format'),
+  target_url: z.string().min(1, 'Target URL is required'),
+  dynamic_resolve_url: z.string().min(1, 'Resolve URL is required').startsWith('http', 'Must start with http:// or https://'),
+  validation_middleware_url: z.string().startsWith('http', 'Must start with http:// or https://'),
+}
+
+const validateField = (field: string, value: string) => {
+  if (field === 'target_url' && schemaType.value === 'dynamic') {
+    delete errors.value[field]
+    return
+  }
+  if (field === 'dynamic_resolve_url' && schemaType.value === 'static') {
+    delete errors.value[field]
+    return
+  }
+  if (field === 'validation_middleware_url' && !useValidationMiddleware.value) {
+    delete errors.value[field]
+    return
+  }
+
+  const schema = fieldSchemas[field]
+  if (!schema) return
+
+  const result = schema.safeParse(value.trim() || undefined)
+  if (!result.success) {
+    const fieldErrors = result.error.flatten().fieldErrors as Record<string, string[] | undefined>
+    const keys = Object.keys(fieldErrors)
+    if (keys.length > 0) {
+      errors.value[field] = fieldErrors[keys[0]!]?.[0] || ''
+    }
+  } else {
+    delete errors.value[field]
+  }
+}
 
 const validateForm = () => {
   errors.value = {}
@@ -161,6 +197,25 @@ const handleDelete = async (id: number) => {
 }
 
 onMounted(fetchRoutes)
+
+// Clear conditional field errors when schema type or middleware toggle changes
+watch(schemaType, () => {
+  delete errors.value['target_url']
+  delete errors.value['dynamic_resolve_url']
+  if (schemaType.value === 'static') {
+    validateField('target_url', targetUrl.value)
+  } else {
+    validateField('dynamic_resolve_url', dynamicResolveUrl.value)
+  }
+})
+
+watch(useValidationMiddleware, (val) => {
+  if (!val) {
+    delete errors.value['validation_middleware_url']
+  } else {
+    validateField('validation_middleware_url', validationMiddlewareUrl.value)
+  }
+})
 </script>
 
 <template>
@@ -245,6 +300,7 @@ onMounted(fetchRoutes)
             v-model="domain"
             type="text"
             id="domain"
+            @input="validateField('domain', ($event.target as HTMLInputElement).value)"
             class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors"
             placeholder="example.com/api"
           />
@@ -268,6 +324,7 @@ onMounted(fetchRoutes)
               v-model="targetUrl"
               type="text"
               id="targetUrl"
+              @input="validateField('target_url', ($event.target as HTMLInputElement).value)"
               class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors"
               placeholder="127.0.0.1:3000"
             />
@@ -281,6 +338,7 @@ onMounted(fetchRoutes)
               v-model="dynamicResolveUrl"
               type="text"
               id="dynamicResolveUrl"
+              @input="validateField('dynamic_resolve_url', ($event.target as HTMLInputElement).value)"
               class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors"
               placeholder="https://api.mybackend.com/resolve-route"
             />
@@ -328,6 +386,7 @@ onMounted(fetchRoutes)
               v-model="validationMiddlewareUrl"
               type="text"
               id="validationUrl"
+              @input="validateField('validation_middleware_url', ($event.target as HTMLInputElement).value)"
               class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors"
               placeholder="https://auth.mybackend.com/validate"
             />

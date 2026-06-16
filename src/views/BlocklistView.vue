@@ -24,9 +24,7 @@ const errors = ref<Record<string, string>>({})
 // Zod Schema
 const ipSchema = z.object({
   ip_address: z.string().min(1, 'IP Address is required').refine(val => {
-    // Basic IPv4 regex
     const ipv4Regex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/
-    // Basic IPv6 regex
     const ipv6Regex = /^([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}$/
     return ipv4Regex.test(val) || ipv6Regex.test(val)
   }, {
@@ -34,6 +32,31 @@ const ipSchema = z.object({
   }),
   reason: z.string().min(1, 'Reason is required')
 })
+
+const fieldSchemas: Record<string, z.ZodSchema> = {
+  ip_address: z.string().min(1, 'IP Address is required').refine(val => {
+    const ipv4Regex = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/
+    const ipv6Regex = /^([\da-fA-F]{1,4}:){7}[\da-fA-F]{1,4}$/
+    return ipv4Regex.test(val) || ipv6Regex.test(val)
+  }, { message: 'Invalid IP Address format' }),
+  reason: z.string().min(1, 'Reason is required'),
+}
+
+const validateField = (field: string, value: string) => {
+  const schema = fieldSchemas[field]
+  if (!schema) return
+
+  const result = schema.safeParse(value.trim() || undefined)
+  if (!result.success) {
+    const fieldErrors = result.error.flatten().fieldErrors as Record<string, string[] | undefined>
+    const keys = Object.keys(fieldErrors)
+    if (keys.length > 0) {
+      errors.value[field] = fieldErrors[keys[0]!]?.[0] || ''
+    }
+  } else {
+    delete errors.value[field]
+  }
+}
 
 const validateForm = () => {
   errors.value = {}
@@ -164,6 +187,7 @@ onMounted(fetchBlocklist)
             v-model="ipAddress"
             type="text"
             id="ipAddress"
+            @input="validateField('ip_address', ($event.target as HTMLInputElement).value)"
             class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors font-jetbrains-mono"
             placeholder="192.168.1.100"
           />
@@ -174,6 +198,7 @@ onMounted(fetchBlocklist)
             v-model="reason"
             type="text"
             id="reason"
+            @input="validateField('reason', ($event.target as HTMLInputElement).value)"
             class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors"
             placeholder="DDoS source, spam request, etc."
           />

@@ -41,13 +41,38 @@ func resolveRouteDB(r *http.Request) (ProxyRoute, bool) {
 
 	path := strings.TrimPrefix(r.URL.Path, "/")
 	full := host + "/" + path
+	reqPath := "/" + path
 
 	for _, key := range routeKeys {
-		if strings.HasPrefix(full, key) {
+		// Normalize key: strip port for host comparison
+		keyHost := key
+		keyFull := key
+		if h, p, err := net.SplitHostPort(key); err == nil {
+			_ = p
+			keyHost = h
+			if idx := strings.Index(key, "/"); idx > 0 {
+				keyFull = keyHost + key[idx:]
+			} else {
+				keyFull = keyHost
+			}
+		}
+
+		// Full host+path prefix match (using normalized key)
+		if strings.HasPrefix(full, keyFull) {
 			return routeConfigDB[key], true
 		}
-		if key == host {
+
+		// Exact host match (port-stripped)
+		if keyHost == host {
 			return routeConfigDB[key], true
+		}
+
+		// Path-only match: extract path from key, match incoming path regardless of host
+		if idx := strings.Index(key, "/"); idx > 0 {
+			keyPath := key[idx:]
+			if strings.HasPrefix(reqPath, keyPath+"/") || reqPath == keyPath {
+				return routeConfigDB[key], true
+			}
 		}
 	}
 	return ProxyRoute{}, false
