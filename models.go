@@ -9,7 +9,7 @@ type ProxyRoute struct {
 	CreatedAt               time.Time `json:"created_at"`
 	UpdatedAt               time.Time `json:"updated_at"`
 	Domain                  string    `gorm:"uniqueIndex" json:"domain"`
-	SchemaType              string    `json:"schema_type"` // "static" or "dynamic"
+	SchemaType              string    `json:"schema_type"`
 	TargetURL               string    `json:"target_url"`
 	DynamicResolveURL       string    `json:"dynamic_resolve_url"`
 	UseBasicAuth            bool      `json:"use_basic_auth"`
@@ -18,6 +18,7 @@ type ProxyRoute struct {
 	UseValidationMiddleware bool      `json:"use_validation_middleware"`
 	ValidationMiddlewareURL string    `json:"validation_middleware_url"`
 	SSLActive               bool      `json:"ssl_active"`
+	LogPathPrefix           string    `json:"log_path_prefix"`
 }
 
 type ProxyLog struct {

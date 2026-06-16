@@ -311,7 +311,23 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(resp.StatusCode)
 	_, _ = io.Copy(w, resp.Body)
 
-	logProxyRequest(r.Host, r.URL.Path, r.Method, resp.StatusCode, time.Since(startTime), clientIP, "", headersToJSON(r.Header), headersToJSON(resp.Header))
+	// Log only if path matches one of the comma-separated prefixes (or none set)
+	if pathMatchesPrefix(r.URL.Path, route.LogPathPrefix) {
+		logProxyRequest(r.Host, r.URL.Path, r.Method, resp.StatusCode, time.Since(startTime), clientIP, "", headersToJSON(r.Header), headersToJSON(resp.Header))
+	}
+}
+
+func pathMatchesPrefix(path, prefixField string) bool {
+	if prefixField == "" {
+		return true
+	}
+	for _, p := range strings.Split(prefixField, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" && strings.HasPrefix(path, p) {
+			return true
+		}
+	}
+	return false
 }
 
 // ─── WebSocket / HTTP upgrade handler ────────────────────────────────────────

@@ -52,6 +52,16 @@ const openDetail = (log: ProxyLog) => {
   selectedLog.value = log
 }
 
+const clearLogs = async () => {
+  if (!confirm('Delete all proxy logs? This cannot be undone.')) return
+  try {
+    await api.delete('/api/logs')
+    fetchLogs()
+  } catch (err) {
+    console.error('Failed to clear logs:', err)
+  }
+}
+
 onMounted(() => {
   fetchLogs()
   const interval = setInterval(fetchLogs, 5000)
@@ -87,6 +97,13 @@ onMounted(() => {
           class="px-4 py-2 border border-graphite rounded-lg text-snow text-[13px] font-medium hover:bg-card-carbon/50 transition-colors cursor-pointer"
         >
           Refresh
+        </button>
+        <button
+          type="button"
+          @click="clearLogs"
+          class="px-4 py-2 border border-red-900/40 bg-red-950/10 rounded-lg text-red-400 text-[13px] font-medium hover:text-red-300 hover:bg-red-950/20 transition-colors cursor-pointer"
+        >
+          Clear Logs
         </button>
       </div>
     </div>

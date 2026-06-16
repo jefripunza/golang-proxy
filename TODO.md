@@ -1,7 +1,7 @@
 # Task List
 
 ## Backlog
-- 
+- Request Detail di dialog Logs, tambahkan request body dan response body, jika request/response body nya file maka di namai saja file
 
 ## Error / Bug
 - 
@@ -50,3 +50,7 @@
 - [x] Header: remove Admin text + avatar, keep only burger + dark mode toggle
 - [x] Overview: remove hero card (text + refresh/view buttons + preview mockup)
 - [x] Routes: terminal button in Actions column with console icon
+- [x] Xterm: auto-resize via ResizeObserver, fills 80vw dialog
+- [x] Routes: Log URL Prefix optional field — filter proxy request logging by path prefix
+- [x] Log URL Prefix: support comma-separated multiple prefixes with trim spaces
+- [x] Logs: Clear Logs button + DELETE /api/logs endpoint

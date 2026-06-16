@@ -28,6 +28,7 @@ const emit = defineEmits<{
 const terminalRef = ref<HTMLElement | null>(null)
 let terminal: Terminal | null = null
 let eventSource: EventSource | null = null
+let resizeObserver: ResizeObserver | null = null
 
 const statusColor = (code: number): string => {
   if (code >= 200 && code < 300) return '\x1b[32m'
@@ -112,14 +113,25 @@ const initTerminal = () => {
       brightCyan: '#67e8f9',
       brightWhite: '#ffffff',
     },
-    cols: 120,
-    rows: 20,
+    allowProposedApi: true,
   })
   terminal.open(terminalRef.value)
   terminal.writeln('\x1b[1;37m══════════════════════════════════════════════════════════════\x1b[0m')
   terminal.writeln(`\x1b[1;36m  LIVE TRAFFIC MONITOR — ${props.domain}\x1b[0m`)
   terminal.writeln('\x1b[1;37m══════════════════════════════════════════════════════════════\x1b[0m')
   terminal.writeln('')
+
+  // Auto-resize terminal to fill container
+  resizeObserver = new ResizeObserver(() => {
+    if (!terminalRef.value || !terminal) return
+    const el = terminalRef.value
+    const charW = terminal.options.fontSize! * 0.6
+    const charH = terminal.options.fontSize! * 1.35
+    const cols = Math.max(40, Math.floor((el.clientWidth - 16) / charW))
+    const rows = Math.max(8, Math.floor((el.clientHeight - 8) / charH))
+    terminal.resize(cols, rows)
+  })
+  resizeObserver.observe(terminalRef.value)
 }
 
 watch(
@@ -147,7 +159,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   disconnectStream()
+  resizeObserver?.disconnect()
+  resizeObserver = null
   terminal?.dispose()
+  terminal = null
 })
 </script>
 

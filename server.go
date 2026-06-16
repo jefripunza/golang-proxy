@@ -80,6 +80,7 @@ func StartAdminServer(port string) {
 
 	// Logs
 	apiMux.HandleFunc("GET /api/logs", handleGetLogs)
+	apiMux.HandleFunc("DELETE /api/logs", handleClearLogs)
 
 	// Metrics / Dashboard
 	apiMux.HandleFunc("GET /api/metrics", handleGetMetrics)
@@ -221,6 +222,7 @@ func handleUpdateRoute(w http.ResponseWriter, r *http.Request) {
 	route.UseValidationMiddleware = updated.UseValidationMiddleware
 	route.ValidationMiddlewareURL = updated.ValidationMiddlewareURL
 	route.SSLActive = updated.SSLActive
+	route.LogPathPrefix = updated.LogPathPrefix
 
 	if err := db.Save(&route).Error; err != nil {
 		http.Error(w, "failed to update route: "+err.Error(), http.StatusInternalServerError)
@@ -321,6 +323,15 @@ func handleGetLogs(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(logs)
+}
+
+func handleClearLogs(w http.ResponseWriter, r *http.Request) {
+	if err := db.Where("1 = 1").Delete(&ProxyLog{}).Error; err != nil {
+		http.Error(w, "failed to clear logs: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
 // ─── Metrics / Dashboard ──────────────────────────────────────────────────────

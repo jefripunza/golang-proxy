@@ -18,6 +18,7 @@ interface ProxyRoute {
   use_validation_middleware: boolean
   validation_middleware_url?: string
   ssl_active: boolean
+  log_path_prefix: string
 }
 
 const routes = ref<ProxyRoute[]>([])
@@ -45,6 +46,7 @@ const basicAuthPassword = ref('')
 const useValidationMiddleware = ref(false)
 const validationMiddlewareUrl = ref('')
 const sslActive = ref(false)
+const logPathPrefix = ref('')
 
 const errors = ref<Record<string, string>>({})
 
@@ -147,6 +149,7 @@ const openAddModal = () => {
   useValidationMiddleware.value = false
   validationMiddlewareUrl.value = ''
   sslActive.value = false
+  logPathPrefix.value = ''
   errors.value = {}
   showModal.value = true
 }
@@ -163,6 +166,7 @@ const openEditModal = (route: ProxyRoute) => {
   useValidationMiddleware.value = route.use_validation_middleware
   validationMiddlewareUrl.value = route.validation_middleware_url || ''
   sslActive.value = route.ssl_active
+  logPathPrefix.value = route.log_path_prefix || ''
   errors.value = {}
   showModal.value = true
 }
@@ -180,7 +184,8 @@ const handleSave = async () => {
     basic_auth_password: useBasicAuth.value ? basicAuthPassword.value : '',
     use_validation_middleware: useValidationMiddleware.value,
     validation_middleware_url: useValidationMiddleware.value ? validationMiddlewareUrl.value : '',
-    ssl_active: sslActive.value
+    ssl_active: sslActive.value,
+    log_path_prefix: logPathPrefix.value
   }
 
   try {
@@ -351,6 +356,15 @@ watch(useValidationMiddleware, (val) => {
               @input="validateField('target_url', ($event.target as HTMLInputElement).value)"
               class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors"
               placeholder="127.0.0.1:3000"
+            />
+          </FormField>
+          <FormField label="Log URL Prefix (optional)" id="logPathPrefix">
+            <input
+              v-model="logPathPrefix"
+              type="text"
+              id="logPathPrefix"
+              class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors"
+              placeholder="/api/v1, /api/v2 — comma-separated, trim spaces"
             />
           </FormField>
         </div>
