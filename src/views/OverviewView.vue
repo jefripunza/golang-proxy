@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
 import api from '@/services/api'
 import Chart from '@/components/common/Chart.vue'
-
-const router = useRouter()
 
 interface Metrics {
   total_requests: number
@@ -168,75 +165,11 @@ const getStatusCodesChartOptions = (seriesData: { name: string; value: number }[
 </script>
 
 <template>
-  <div class="space-y-10">
-    <!-- Hero Section -->
-    <section class="relative pt-4 pb-6">
-      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
-        <div class="max-w-xl space-y-5">
-          <span class="text-caption font-jetbrains-mono tracking-caption text-blue-cornflower uppercase font-medium">
-            COMMAND CENTER
-          </span>
-          <h1 class="text-heading font-semibold text-snow leading-[1.15] tracking-[-0.84px] max-w-md">
-            Get total clarity from your proxy traffic
-          </h1>
-          <p class="text-base text-ash leading-relaxed max-w-lg">
-            Monitor request volume, latency, and status codes in real&ndash;time. Centralize your proxy analytics to pinpoint bottlenecks and optimize routing performance.
-          </p>
-          <div class="flex items-center gap-3 pt-1">
-            <button
-              type="button"
-              @click="fetchMetrics"
-              class="px-5 py-2.5 bg-snow text-page-ink rounded-lg text-[13px] font-semibold hover:bg-ash transition-colors cursor-pointer leading-none"
-            >
-              Refresh metrics
-            </button>
-            <button
-              type="button"
-              @click="router.push('/logs')"
-              class="px-5 py-2.5 border border-graphite rounded-lg text-snow text-[13px] font-medium hover:bg-card-carbon/50 transition-colors cursor-pointer leading-none"
-            >
-              View logs
-            </button>
-          </div>
-        </div>
-
-        <!-- Preview Card -->
-        <div class="hidden lg:block shrink-0 w-[420px]">
-          <div class="bg-card-carbon border border-steel-border rounded-lg overflow-hidden">
-            <div class="h-8 border-b border-steel-border flex items-center px-4 gap-2">
-              <div class="flex gap-1.5">
-                <div class="w-2.5 h-2.5 rounded-full bg-red-400/60" />
-                <div class="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
-                <div class="w-2.5 h-2.5 rounded-full bg-green-400/60" />
-              </div>
-              <span class="text-[10px] font-jetbrains-mono text-ash ml-2 uppercase tracking-wider">Proxy Monitor</span>
-            </div>
-            <div class="p-4 space-y-3">
-              <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-blue-cornflower animate-pulse" />
-                <span class="text-[11px] font-jetbrains-mono text-blue-cornflower uppercase tracking-wider font-medium">Live</span>
-                <span class="text-[11px] text-ash ml-auto font-jetbrains-mono">
-                  {{ new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}
-                </span>
-              </div>
-              <div class="grid grid-cols-2 gap-2">
-                <div class="bg-deep-coal rounded-[6px] p-3">
-                  <span class="text-[9px] font-jetbrains-mono tracking-wider text-ash uppercase">Requests</span>
-                  <div class="text-lg font-semibold text-snow mt-1 font-inter">{{ metrics?.total_requests ?? '—' }}</div>
-                </div>
-                <div class="bg-deep-coal rounded-[6px] p-3">
-                  <span class="text-[9px] font-jetbrains-mono tracking-wider text-ash uppercase">Avg Latency</span>
-                  <div class="text-lg font-semibold text-snow mt-1 font-inter">{{ metrics?.average_latency_ms.toFixed(0) ?? '—' }}ms</div>
-                </div>
-              </div>
-              <div class="h-24 bg-deep-coal rounded-[6px] flex items-end gap-1 px-3 pb-2">
-                <div v-for="i in 48" :key="i" class="flex-1 bg-blue-cornflower/30 rounded-t-[1px]" :style="{ height: (20 + Math.random() * 70) + '%' }" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+  <div class="space-y-8">
+    <div>
+      <span class="text-caption font-jetbrains-mono tracking-caption text-blue-cornflower uppercase font-medium">COMMAND CENTER</span>
+      <h2 class="text-heading-sm font-semibold text-snow mt-1 tracking-tight">Overview</h2>
+    </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center py-20 text-ash text-sm">

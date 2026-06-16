@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 
 const showAnnouncement = ref(true)
 const isDarkMode = ref(true)
+const sidebarOpen = ref(true)
 
 const applyTheme = (dark: boolean) => {
   const html = document.documentElement
@@ -19,6 +20,10 @@ const toggleDarkMode = () => {
   isDarkMode.value = !isDarkMode.value
   applyTheme(isDarkMode.value)
   localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light')
+}
+
+const toggleSidebar = () => {
+  sidebarOpen.value = !sidebarOpen.value
 }
 
 const navItems = [
@@ -67,48 +72,43 @@ onMounted(() => {
       </button>
     </div>
 
-    <!-- Header -->
-    <header class="h-16 border-b border-steel-border/60 bg-page-ink/80 backdrop-blur-sm flex items-center justify-between px-6 sticky top-0 z-40 select-none shrink-0">
-      <div />
-      <div class="flex items-center gap-3">
-        <button
-          type="button"
-          @click="toggleDarkMode"
-          class="p-1.5 rounded-lg text-ash hover:text-snow hover:bg-card-carbon/50 transition-colors cursor-pointer"
-          title="Toggle theme"
-        >
-          <svg v-if="isDarkMode" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <circle cx="12" cy="12" r="5" />
-            <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-            <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-          </svg>
-          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          </svg>
-        </button>
-        <span class="text-[13px] text-ash font-medium select-none">Admin</span>
-        <div class="w-7 h-7 rounded-full bg-card-carbon border border-steel-border flex items-center justify-center select-none">
-          <span class="text-[11px] font-semibold text-snow">A</span>
-        </div>
-      </div>
-    </header>
-
     <div class="flex flex-1 overflow-hidden">
       <!-- Sidebar -->
       <aside
-        class="border-r border-steel-border/60 bg-deep-coal/50 flex flex-col shrink-0 select-none"
-        style="width: 228px; min-width: 228px; max-width: 228px; flex: 0 0 228px;"
+        class="relative border-r border-steel-border/60 bg-deep-coal/50 flex flex-col shrink-0 select-none transition-all duration-200 overflow-hidden"
+        :style="sidebarOpen
+          ? { width: '232px', minWidth: '232px', maxWidth: '232px', flex: '0 0 232px' }
+          : { width: '60px', minWidth: '60px', maxWidth: '60px', flex: '0 0 60px' }"
       >
-        <!-- Logo in sidebar -->
-        <div class="flex items-center gap-2.5 px-4 pt-5 pb-3">
+        <!-- App Identity Row -->
+        <div class="flex items-center gap-2.5 px-4 pt-5 pb-3 shrink-0">
           <svg width="24" height="24" viewBox="0 0 32 32" fill="none" class="shrink-0">
             <rect width="32" height="32" rx="8" fill="#6798ff" />
             <path d="M8 22V10l8 6-8 6z" fill="#0a0a0a" />
             <path d="M18 22V10l8 6-8 6z" fill="#0a0a0a" opacity="0.6" />
           </svg>
-          <span class="text-[15px] font-semibold text-snow tracking-tight">Golang Proxy</span>
+          <span
+            class="text-[15px] font-semibold text-snow tracking-tight whitespace-nowrap transition-opacity duration-200"
+            :class="sidebarOpen ? 'opacity-100' : 'opacity-0'"
+          >Golang Proxy</span>
+          <!-- Hamburger button - positioned outside the sidebar border -->
+          <button
+            type="button"
+            @click="toggleSidebar"
+            class="absolute right-0 translate-x-1/2 z-20 w-6 h-6 flex items-center justify-center rounded-full bg-card-carbon border border-steel-border text-ash hover:text-snow hover:border-blue-cornflower/40 transition-colors cursor-pointer"
+            :style="{ top: '20px' }"
+            title="Toggle sidebar"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
         </div>
+
+        <!-- Separator before nav -->
+        <div class="mx-3 mb-3 border-t border-steel-border/40" />
 
         <!-- Nav items -->
         <nav class="flex flex-col gap-0.5 px-3 pb-5">
@@ -116,7 +116,7 @@ onMounted(() => {
             v-for="item in navItems"
             :key="item.path"
             :to="item.path"
-            class="flex items-center gap-3 px-3 py-2.5 rounded-full text-[13px] font-medium transition-all duration-150 select-none border"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-full text-[13px] font-medium transition-all duration-150 select-none border whitespace-nowrap"
             :class="
               $route.path === item.path
                 ? 'border-blue-cornflower/40 bg-blue-cornflower/5 text-blue-cornflower'
@@ -130,13 +130,35 @@ onMounted(() => {
             >
               <path :d="item.icon" />
             </svg>
-            <span class="whitespace-nowrap">{{ item.name }}</span>
+            <span
+              class="transition-opacity duration-200"
+              :class="sidebarOpen ? 'opacity-100' : 'opacity-0'"
+            >{{ item.name }}</span>
           </router-link>
         </nav>
       </aside>
 
       <!-- Main Content -->
       <main class="flex-1 overflow-y-auto bg-page-ink relative z-10">
+        <!-- Dark mode toggle in content top-right -->
+        <div class="sticky top-0 z-30 flex justify-end px-6 py-3 bg-page-ink/80 backdrop-blur-sm border-b border-steel-border/60">
+          <button
+            type="button"
+            @click="toggleDarkMode"
+            class="p-1.5 rounded-lg text-ash hover:text-snow hover:bg-card-carbon/50 transition-colors cursor-pointer"
+            title="Toggle theme"
+          >
+            <svg v-if="isDarkMode" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+            </svg>
+            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </button>
+        </div>
         <div class="max-w-[1200px] mx-auto px-6 py-8">
           <router-view />
         </div>

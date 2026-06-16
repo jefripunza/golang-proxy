@@ -266,11 +266,7 @@ watch(useValidationMiddleware, (val) => {
         </thead>
         <tbody class="divide-y divide-steel-border text-sm text-snow">
           <tr v-for="route in routes" :key="route.id" class="hover:bg-deep-coal/50 transition-colors">
-            <td
-              class="px-6 py-4 font-semibold font-jetbrains-mono text-blue-cornflower cursor-pointer hover:underline"
-              @click="openTerminal(route)"
-              title="Click to monitor live traffic"
-            >{{ route.domain }}</td>
+            <td class="px-6 py-4 font-semibold font-jetbrains-mono text-blue-cornflower">{{ route.domain }}</td>
             <td class="px-6 py-4">
               <span
                 class="px-2 py-0.5 rounded-[4px] text-[10px] font-jetbrains-mono font-medium uppercase tracking-wider"
@@ -288,14 +284,27 @@ watch(useValidationMiddleware, (val) => {
                 {{ route.ssl_active ? 'Active' : 'Disabled' }}
               </span>
             </td>
-            <td class="px-6 py-4 text-right space-x-2">
-              <button 
+            <td class="px-6 py-4 text-right space-x-1.5">
+              <button
+                type="button"
+                @click="openTerminal(route)"
+                class="px-2 py-1 text-xs border border-blue-cornflower/30 bg-blue-cornflower/5 rounded-lg text-blue-cornflower hover:bg-blue-cornflower/10 transition-colors cursor-pointer"
+                title="Live traffic monitor"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block align-text-bottom">
+                  <polyline points="4 17 10 11 4 5" />
+                  <line x1="12" y1="19" x2="20" y2="19" />
+                </svg>
+              </button>
+              <button
+                type="button"
                 @click="openEditModal(route)" 
                 class="px-2.5 py-1 text-xs border border-graphite rounded-lg text-ash hover:text-snow hover:border-steel-border transition-colors cursor-pointer"
               >
                 Edit
               </button>
-              <button 
+              <button
+                type="button"
                 @click="handleDelete(route.id)" 
                 class="px-2.5 py-1 text-xs border border-red-900/40 bg-red-950/10 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-950/20 transition-colors cursor-pointer"
               >

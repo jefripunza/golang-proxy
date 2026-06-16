@@ -1,10 +1,7 @@
 # Task List
 
 ## Backlog
-- di sidebar, paling atas ada logo dan nama aplikasi, itu di pindahkan paling atas saja, sekarang jelek banget, dan ada button burger untuk expand sidebar
-- di header dashboard ada tulisan admin dan bulat A, hapus aja, sisakan toggle dark mode
-- di halaman Overview, ada card dengan tulisan "Get total clarity from your proxy traffic" itu juga di hapus beserta tombol refresh dan view
-- halaman Routes, di tombol untuk show xterm itu pindah jadi button di kolom action, di button nya ada icon terminal ya biar asik
+- halaman Routes, ada bug juga ketika di klik pertama kali tidak konek SSE, saya close dialog, saya klik lagi baru konek
 - 
 
 ## Error / Bug
@@ -50,3 +47,7 @@
 - [x] Sidebar nav: active pill-outline style (blue border + subtle bg, rounded-full)
 - [x] Simplify nav labels: Overview / Routes / Block List / Logs
 - [x] Update page headings to match nav labels
+- [x] Sidebar: burger button to collapse/expand sidebar
+- [x] Header: remove Admin text + avatar, keep only burger + dark mode toggle
+- [x] Overview: remove hero card (text + refresh/view buttons + preview mockup)
+- [x] Routes: terminal button in Actions column with console icon
