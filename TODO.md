@@ -1,7 +1,6 @@
 # Task List
 
 ## Backlog
-- halaman Routes, ada bug juga ketika di klik pertama kali tidak konek SSE, saya close dialog, saya klik lagi baru konek
 - 
 
 ## Error / Bug

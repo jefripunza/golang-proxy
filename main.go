@@ -28,11 +28,11 @@ func main() {
 	// Initialize SQLite DB connection & migration
 	initDB()
 
-	configFile := os.Getenv("CONFIG_FILE")
-	if configFile == "" {
-		configFile = "config.json"
-	}
-	setConfig(configFile)
+	// Start SSE log broker
+	go sseBroker.run()
+
+	// Load route config cache from database
+	reloadConfigCache()
 
 	// Start concurrent Admin Dashboard Server (SERVER)
 	adminPort := os.Getenv("SERVER_PORT")

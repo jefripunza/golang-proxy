@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onUnmounted, onMounted, nextTick } from 'vue'
 import { Terminal } from '@xterm/xterm'
 import '@xterm/xterm/css/xterm.css'
 
@@ -132,8 +132,18 @@ watch(
     } else {
       disconnectStream()
     }
-  }
+  },
+  { immediate: true }
 )
+
+onMounted(() => {
+  if (props.show && !terminal) {
+    nextTick().then(() => {
+      initTerminal()
+      connectStream()
+    })
+  }
+})
 
 onUnmounted(() => {
   disconnectStream()
@@ -144,9 +154,9 @@ onUnmounted(() => {
 <template>
   <div
     v-if="show"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
   >
-    <div class="w-full max-w-4xl bg-card-carbon border border-steel-border rounded-lg overflow-hidden flex flex-col max-h-[85vh]">
+    <div class="w-[80vw] max-w-[80vw] h-[80vh] max-h-[80vh] bg-card-carbon border border-steel-border rounded-lg overflow-hidden flex flex-col">
       <div class="px-5 py-3 border-b border-steel-border flex items-center justify-between shrink-0">
         <div class="flex items-center gap-3">
           <div class="flex gap-1.5">

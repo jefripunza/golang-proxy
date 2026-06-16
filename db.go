@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -10,8 +11,10 @@ import (
 var db *gorm.DB
 
 func initDB() {
+	os.MkdirAll("database", 0755)
+
 	var err error
-	db, err = gorm.Open(sqlite.Open("proxy.db"), &gorm.Config{})
+	db, err = gorm.Open(sqlite.Open("database/proxy.db"), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}

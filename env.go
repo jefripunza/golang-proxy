@@ -24,11 +24,4 @@ func init() {
 		log.Fatalf("cannot generate session token: %v", err)
 	}
 	sessionToken = hex.EncodeToString(raw)
-
-	// Load routing config from JSON file
-	configFile := os.Getenv("CONFIG_FILE")
-	if configFile == "" {
-		configFile = "config.json"
-	}
-
 }

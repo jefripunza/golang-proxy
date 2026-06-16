@@ -12,11 +12,14 @@ interface ProxyLog {
   response_time_ms: number
   source_ip: string
   error_message: string
+  request_headers: string
+  response_headers: string
 }
 
 const logs = ref<ProxyLog[]>([])
 const loading = ref(true)
 const limit = ref(100)
+const selectedLog = ref<ProxyLog | null>(null)
 
 const fetchLogs = async () => {
   try {
@@ -36,9 +39,21 @@ const getStatusClass = (code: number) => {
   return 'bg-red-950/40 border border-red-800/40 text-red-300'
 }
 
+const parseHeaders = (raw: string): Record<string, string> => {
+  if (!raw) return {}
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return {}
+  }
+}
+
+const openDetail = (log: ProxyLog) => {
+  selectedLog.value = log
+}
+
 onMounted(() => {
   fetchLogs()
-  // Poll every 5 seconds for real-time monitoring
   const interval = setInterval(fetchLogs, 5000)
   return () => clearInterval(interval)
 })
@@ -50,7 +65,7 @@ onMounted(() => {
       <div>
         <span class="text-caption font-jetbrains-mono tracking-caption text-blue-cornflower uppercase font-medium">TRAFFIC MONITOR</span>
         <h2 class="text-heading-sm font-semibold text-snow mt-1 tracking-tight">Logs</h2>
-        <p class="text-body-sm text-ash mt-1 max-w-lg">Real-time request log stream. Monitor incoming traffic, status codes, and response latencies.</p>
+        <p class="text-body-sm text-ash mt-1 max-w-lg">Real-time request log stream. Click any row to inspect request and response details.</p>
       </div>
       <div class="flex items-center gap-3">
         <div class="flex items-center gap-2 select-none">
@@ -67,6 +82,7 @@ onMounted(() => {
           </select>
         </div>
         <button
+          type="button"
           @click="fetchLogs"
           class="px-4 py-2 border border-graphite rounded-lg text-snow text-[13px] font-medium hover:bg-card-carbon/50 transition-colors cursor-pointer"
         >
@@ -75,10 +91,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Logs Table -->
-    <div v-if="loading" class="text-center text-ash py-8">
-      Loading traffic activity logs...
-    </div>
+    <div v-if="loading" class="text-center text-ash py-8">Loading traffic activity logs...</div>
 
     <div v-else-if="logs.length === 0" class="border border-dashed border-steel-border rounded-lg p-12 text-center text-ash">
       No activity logs found. Ensure requests are hitting the proxy engine.
@@ -97,7 +110,12 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody class="divide-y divide-steel-border text-sm text-snow font-jetbrains-mono">
-          <tr v-for="log in logs" :key="log.id" class="hover:bg-deep-coal/50 transition-colors">
+          <tr
+            v-for="log in logs"
+            :key="log.id"
+            class="hover:bg-deep-coal/50 transition-colors cursor-pointer"
+            @click="openDetail(log)"
+          >
             <td class="px-6 py-4 text-ash text-xs">
               {{ new Date(log.timestamp).toLocaleString() }}
             </td>
@@ -112,8 +130,8 @@ onMounted(() => {
               <div v-if="log.error_message" class="text-[10px] text-red-400 mt-0.5 truncate">{{ log.error_message }}</div>
             </td>
             <td class="px-6 py-4">
-              <span 
-                class="px-2 py-0.5 rounded-[4px] text-[10px] font-medium uppercase tracking-wider" 
+              <span
+                class="px-2 py-0.5 rounded-[4px] text-[10px] font-medium uppercase tracking-wider"
                 :class="getStatusClass(log.status_code)"
               >
                 {{ log.status_code || 'Blocked' }}
@@ -123,6 +141,85 @@ onMounted(() => {
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Detail Modal -->
+    <div
+      v-if="selectedLog"
+      class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      @click.self="selectedLog = null"
+    >
+      <div class="w-full max-w-2xl max-h-[80vh] bg-card-carbon border border-steel-border rounded-lg overflow-hidden flex flex-col">
+        <div class="px-5 py-3 border-b border-steel-border flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-3">
+            <span class="text-[13px] font-semibold text-snow font-inter">Request Detail</span>
+            <span
+              class="px-2 py-0.5 rounded-[4px] text-[10px] font-jetbrains-mono font-medium uppercase tracking-wider"
+              :class="getStatusClass(selectedLog.status_code)"
+            >
+              {{ selectedLog.status_code || 'Blocked' }}
+            </span>
+          </div>
+          <button
+            type="button"
+            @click="selectedLog = null"
+            class="text-ash hover:text-snow transition-colors cursor-pointer"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="p-5 overflow-y-auto flex-1 space-y-4 text-sm">
+          <!-- Summary -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-deep-coal rounded-lg p-3">
+              <span class="text-[10px] font-jetbrains-mono tracking-wider text-ash uppercase">Method</span>
+              <div class="text-snow mt-0.5 font-semibold">{{ selectedLog.method }}</div>
+            </div>
+            <div class="bg-deep-coal rounded-lg p-3">
+              <span class="text-[10px] font-jetbrains-mono tracking-wider text-ash uppercase">Status</span>
+              <div class="text-snow mt-0.5 font-semibold">{{ selectedLog.status_code || '—' }}</div>
+            </div>
+            <div class="bg-deep-coal rounded-lg p-3">
+              <span class="text-[10px] font-jetbrains-mono tracking-wider text-ash uppercase">Source IP</span>
+              <div class="text-snow mt-0.5 font-medium font-jetbrains-mono">{{ selectedLog.source_ip }}</div>
+            </div>
+            <div class="bg-deep-coal rounded-lg p-3">
+              <span class="text-[10px] font-jetbrains-mono tracking-wider text-ash uppercase">Latency</span>
+              <div class="text-snow mt-0.5 font-medium">{{ selectedLog.response_time_ms }} ms</div>
+            </div>
+            <div class="col-span-2 bg-deep-coal rounded-lg p-3">
+              <span class="text-[10px] font-jetbrains-mono tracking-wider text-ash uppercase">URL</span>
+              <div class="text-blue-cornflower mt-0.5 font-medium font-jetbrains-mono text-xs break-all">{{ selectedLog.domain }}{{ selectedLog.path }}</div>
+            </div>
+          </div>
+
+          <!-- Request Headers -->
+          <div>
+            <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase">Request Headers</span>
+            <div class="mt-1.5 bg-deep-coal rounded-lg p-3 font-jetbrains-mono text-xs max-h-40 overflow-y-auto">
+              <div v-if="Object.keys(parseHeaders(selectedLog.request_headers)).length === 0" class="text-ash">No headers captured</div>
+              <div v-else v-for="(val, key) in parseHeaders(selectedLog.request_headers)" :key="key" class="flex gap-2 py-0.5">
+                <span class="text-blue-cornflower shrink-0">{{ key }}:</span>
+                <span class="text-ash break-all">{{ val }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Response Headers -->
+          <div>
+            <span class="text-caption font-jetbrains-mono tracking-caption text-ash uppercase">Response Headers</span>
+            <div class="mt-1.5 bg-deep-coal rounded-lg p-3 font-jetbrains-mono text-xs max-h-40 overflow-y-auto">
+              <div v-if="Object.keys(parseHeaders(selectedLog.response_headers)).length === 0" class="text-ash">No headers captured</div>
+              <div v-else v-for="(val, key) in parseHeaders(selectedLog.response_headers)" :key="key" class="flex gap-2 py-0.5">
+                <span class="text-green-400 shrink-0">{{ key }}:</span>
+                <span class="text-ash break-all">{{ val }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

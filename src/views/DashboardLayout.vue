@@ -95,7 +95,7 @@ onMounted(() => {
           <button
             type="button"
             @click="toggleSidebar"
-            class="absolute right-0 translate-x-1/2 z-20 w-6 h-6 flex items-center justify-center rounded-full bg-card-carbon border border-steel-border text-ash hover:text-snow hover:border-blue-cornflower/40 transition-colors cursor-pointer"
+            class="absolute right-0 translate-x-1/2 z-10 w-6 h-6 flex items-center justify-center rounded-full bg-card-carbon border border-steel-border text-ash hover:text-snow hover:border-blue-cornflower/40 transition-colors cursor-pointer"
             :style="{ top: '20px' }"
             title="Toggle sidebar"
           >

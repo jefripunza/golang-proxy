@@ -488,7 +488,7 @@ func handleMetricsSSE(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleRouteStreamSSE streams live request logs for a specific route
+// handleRouteStreamSSE streams live request logs for a specific route via broker
 func handleRouteStreamSSE(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -515,40 +515,22 @@ func handleRouteStreamSSE(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	ctx := r.Context()
-	var lastID uint
+	ch := make(chan []byte, 64)
+	sseBroker.register <- subscription{ch: ch, domain: route.Domain}
 
-	ticker := time.NewTicker(2 * time.Second)
-	defer ticker.Stop()
+	defer func() {
+		sseBroker.unregister <- ch
+	}()
 
-	sendLogs := func() bool {
-		var logs []ProxyLog
-		if err := db.Where("domain = ? AND id > ?", route.Domain, lastID).Order("id ASC").Limit(50).Find(&logs).Error; err != nil {
-			return false
-		}
-
-		for _, l := range logs {
-			data, err := json.Marshal(l)
-			if err != nil {
-				continue
-			}
-			_, err = fmt.Fprintf(w, "data: %s\n\n", data)
-			if err != nil {
-				return false
-			}
-			lastID = l.ID
-		}
-		flusher.Flush()
-		return true
-	}
-
-	sendLogs()
+	// Send initial comment to confirm connection
+	fmt.Fprintf(w, ": connected to %s\n\n", route.Domain)
+	flusher.Flush()
 
 	for {
 		select {
-		case <-ticker.C:
-			if !sendLogs() {
-				return
-			}
+		case data := <-ch:
+			fmt.Fprintf(w, "data: %s\n\n", data)
+			flusher.Flush()
 		case <-ctx.Done():
 			return
 		}

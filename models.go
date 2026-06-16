@@ -21,15 +21,17 @@ type ProxyRoute struct {
 }
 
 type ProxyLog struct {
-	ID             uint      `gorm:"primaryKey" json:"id"`
-	Timestamp      time.Time `gorm:"index" json:"timestamp"`
-	Domain         string    `gorm:"index" json:"domain"`
-	Path           string    `json:"path"`
-	Method         string    `json:"method"`
-	StatusCode     int       `json:"status_code"`
-	ResponseTimeMs int64     `json:"response_time_ms"`
-	SourceIP       string    `json:"source_ip"`
-	ErrorMessage   string    `json:"error_message"`
+	ID              uint      `gorm:"primaryKey" json:"id"`
+	Timestamp       time.Time `gorm:"index" json:"timestamp"`
+	Domain          string    `gorm:"index" json:"domain"`
+	Path            string    `json:"path"`
+	Method          string    `json:"method"`
+	StatusCode      int       `json:"status_code"`
+	ResponseTimeMs  int64     `json:"response_time_ms"`
+	SourceIP        string    `json:"source_ip"`
+	ErrorMessage    string    `json:"error_message"`
+	RequestHeaders  string    `json:"request_headers"`
+	ResponseHeaders string    `json:"response_headers"`
 }
 
 type BlockedIP struct {
