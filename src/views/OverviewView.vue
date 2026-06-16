@@ -37,6 +37,16 @@ const fetchMetrics = async () => {
   }
 }
 
+const clearMetrics = async () => {
+  if (!confirm('Clear all proxy metrics data? This cannot be undone.')) return
+  try {
+    await api.delete('/api/metrics')
+    fetchMetrics()
+  } catch (err) {
+    console.error('Failed to clear metrics:', err)
+  }
+}
+
 const connectSSE = () => {
   if (eventSource) return
   eventSource = new EventSource('/api/metrics/stream', { withCredentials: true })
@@ -171,9 +181,18 @@ const getStatusCodesChartOptions = (seriesData: { name: string; value: number }[
 
 <template>
   <div class="space-y-8">
-    <div>
-      <span class="text-caption font-jetbrains-mono tracking-caption text-blue-cornflower uppercase font-medium">COMMAND CENTER</span>
-      <h2 class="text-heading-sm font-semibold text-snow mt-1 tracking-tight">Overview</h2>
+    <div class="flex items-center justify-between">
+      <div>
+        <span class="text-caption font-jetbrains-mono tracking-caption text-blue-cornflower uppercase font-medium">COMMAND CENTER</span>
+        <h2 class="text-heading-sm font-semibold text-snow mt-1 tracking-tight">Overview</h2>
+      </div>
+      <button
+        type="button"
+        @click="clearMetrics"
+        class="px-4 py-2 border border-red-900/40 bg-red-950/10 rounded-lg text-red-400 text-[13px] font-medium hover:text-red-300 hover:bg-red-950/20 transition-colors cursor-pointer"
+      >
+        Clear Metrics
+      </button>
     </div>
 
     <!-- Loading State -->

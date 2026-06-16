@@ -84,6 +84,7 @@ func StartAdminServer(port string) {
 
 	// Metrics / Dashboard
 	apiMux.HandleFunc("GET /api/metrics", handleGetMetrics)
+	apiMux.HandleFunc("DELETE /api/metrics", handleClearMetrics)
 	apiMux.HandleFunc("GET /api/metrics/stream", handleMetricsSSE)
 
 	// Per-route traffic SSE stream
@@ -333,6 +334,15 @@ func handleGetLogs(w http.ResponseWriter, r *http.Request) {
 func handleClearLogs(w http.ResponseWriter, r *http.Request) {
 	if err := db.Where("1 = 1").Delete(&ProxyLog{}).Error; err != nil {
 		http.Error(w, "failed to clear logs: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+func handleClearMetrics(w http.ResponseWriter, r *http.Request) {
+	if err := db.Where("1 = 1").Delete(&ProxyMetric{}).Error; err != nil {
+		http.Error(w, "failed to clear metrics: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

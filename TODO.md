@@ -1,9 +1,9 @@
 # Task List
 
 ## Backlog
-- di halaman Logs, button "Clear Logs", jika di execute maka yang clear hanya table log saja "ProxyLog" dan jangan clear table lain;
-- di halaman Overview, tambahkan button clear untuk clear table "ProxyMetric";
-- untuk rate limiter, bikin table baru saja, table rate limiter tidak boleh di delete / clear;
+- di halaman Logs, tambahkan dropdown untuk auto clear (tolong buatkan range nya untuk dropdown nya), dan paling terakhir di buat never untuk tidak di clear sama sekali, yang menjalankan clear nya adalah worker baru;
+- di halaman Overview, chart untuk "Request Volume" dan "Request Latency" digabung saja jadi 1 chart. lalu "Total Requests" di hapus saja. untuk "Avg Latency" di ganti "Max Latency" dan "Min Latency" (pengganti Total Requests). lalu chart yang jadi satu tadi di buat row nya 9 dan chart "Status Code Distribution" row 3 (karena cuman donut jadi kecil saja ruang nya);
+- revisi semua halaman harus bagus responsive nya, pastikan bisa di buka via HP dan Tablet;
 - 
 
 ## Error / Bug
@@ -64,3 +64,6 @@
 - [x] Fix route port matching: route with port (e.g. localhost:8080) must match exact port, not just host
 - [x] ProxyMetric table: per-minute request_volume + request_latency, worker inserts at HH:MM:00
 - [x] Overview charts: SSE streams ProxyMetric data for real-time Volume + Latency charts
+- [x] Clear Logs: only deletes ProxyLog table (explicit per-model)
+- [x] Clear Metrics: button on Overview + DELETE /api/metrics endpoint
+- [x] RateLimitRecord table: dedicated persistent table, immune to clear operations

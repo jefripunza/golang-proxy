@@ -55,3 +55,12 @@ type ProxyMetric struct {
 	RequestVolume  int64     `json:"request_volume"`
 	RequestLatency float64   `json:"request_latency"` // running average in ms
 }
+
+type RateLimitRecord struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	RouteID   uint      `gorm:"index" json:"route_id"`
+	ClientKey string    `gorm:"index" json:"client_key"`
+	Count     int       `json:"count"`
+	ResetAt   time.Time `json:"reset_at"`
+}
