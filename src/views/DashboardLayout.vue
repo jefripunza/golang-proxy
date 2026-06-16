@@ -24,11 +24,10 @@ const toggleDarkMode = () => {
 
 const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value
+  localStorage.setItem('sidebar', sidebarOpen.value ? 'open' : 'closed')
 }
 
-const closeSidebar = () => {
-  sidebarOpen.value = false
-}
+// Removed closeSidebar — nav clicks keep current sidebar state
 
 const navItems = [
   { name: 'Overview', path: '/dashboard', icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z' },
@@ -46,6 +45,8 @@ onMounted(() => {
     isDarkMode.value = true
     applyTheme(true)
   }
+  const savedSidebar = localStorage.getItem('sidebar')
+  sidebarOpen.value = savedSidebar !== 'closed'
 })
 </script>
 
@@ -81,7 +82,7 @@ onMounted(() => {
       <div
         v-if="sidebarOpen"
         class="fixed inset-0 z-30 bg-black/50 lg:hidden"
-        @click="closeSidebar"
+        @click="toggleSidebar"
       />
 
       <!-- Sidebar -->
@@ -122,7 +123,6 @@ onMounted(() => {
         <nav class="flex flex-col gap-0.5 px-3 pb-5">
           <router-link
             v-for="item in navItems" :key="item.path" :to="item.path"
-            @click="closeSidebar"
             class="flex items-center gap-3 px-3 py-2.5 rounded-full text-[13px] font-medium transition-all duration-150 select-none border whitespace-nowrap"
             :class="$route.path === item.path ? 'border-blue-cornflower/40 bg-blue-cornflower/5 text-blue-cornflower' : 'border-transparent text-ash hover:text-snow hover:bg-card-carbon/40'"
           >

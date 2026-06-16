@@ -15,6 +15,7 @@ const initChart = () => {
     const darkThemeOptions: Highcharts.Options = {
       chart: {
         backgroundColor: 'transparent',
+        animation: false,
         style: {
           fontFamily: 'Inter, sans-serif'
         }

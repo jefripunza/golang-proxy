@@ -77,14 +77,15 @@ const getCombinedChartOptions = (
   volumeData: { timestamp: number; value: number }[],
   latencyData: { timestamp: number; value: number }[]
 ): Highcharts.Options => ({
-  chart: { type: 'line', height: 320 },
-  title: { text: 'Request Volume & Response Latency', align: 'left', margin: 0, y: 16 },
+  chart: { type: 'line', height: 320, animation: false },
+  title: { text: 'Request Volume & Response Latency', align: 'left', margin: 24, y: 24 },
   xAxis: { type: 'datetime', lineWidth: 0, tickWidth: 0, labels: { y: 16 } },
   yAxis: [
     { title: { text: 'Requests', style: { color: '#6798ff' } }, gridLineDashStyle: 'Dash' as Highcharts.DashStyleValue, labels: { y: 8, style: { color: '#6798ff' } } },
     { title: { text: 'ms', style: { color: '#a7a7a7' } }, opposite: true, gridLineWidth: 0, labels: { y: 8, style: { color: '#a7a7a7' } } }
   ],
-  plotOptions: { line: { marker: { enabled: false }, lineWidth: 2 } },
+  tooltip: { shared: true },
+  plotOptions: { line: { marker: { enabled: false }, lineWidth: 2, animation: false } },
   series: [{
     name: 'Requests', type: 'line', yAxis: 0,
     data: volumeData.map(d => [d.timestamp, d.value]),
@@ -97,8 +98,8 @@ const getCombinedChartOptions = (
 })
 
 const getStatusCodesChartOptions = (seriesData: { name: string; value: number }[]): Highcharts.Options => ({
-  chart: { type: 'pie', height: 200 },
-  title: { text: 'Status Codes', align: 'left', margin: 0, y: 12 },
+  chart: { type: 'pie', height: 200, animation: false },
+  title: { text: 'Status Codes', align: 'left', margin: 20, y: 20 },
   tooltip: { pointFormat: '<b>{point.percentage:.1f}%</b> ({point.y})' },
   plotOptions: {
     pie: {
@@ -145,7 +146,7 @@ onUnmounted(() => { eventSource?.close() })
         <div class="bg-card-carbon border border-steel-border rounded-lg p-4">
           <span class="text-[9px] font-jetbrains-mono tracking-wider text-ash uppercase">Success Rate</span>
           <div class="text-xl font-semibold text-green-400 mt-1 font-inter">
-            {{ metrics.total_requests > 0 ? ((metrics.success_requests / metrics.total_requests) * 100).toFixed(1) : '100' }}%
+            {{ metrics.total_requests > 0 ? ((metrics.success_requests / metrics.total_requests) * 100).toFixed(2) : '100.00' }}%
           </div>
         </div>
         <div class="bg-card-carbon border border-steel-border rounded-lg p-4">
@@ -154,15 +155,15 @@ onUnmounted(() => { eventSource?.close() })
         </div>
         <div class="bg-card-carbon border border-steel-border rounded-lg p-4">
           <span class="text-[9px] font-jetbrains-mono tracking-wider text-ash uppercase">Avg Latency</span>
-          <div class="text-xl font-semibold text-snow mt-1 font-inter">{{ metrics.average_latency_ms.toFixed(0) }}ms</div>
+          <div class="text-xl font-semibold text-snow mt-1 font-inter">{{ metrics.average_latency_ms.toFixed(2) }}ms</div>
         </div>
         <div class="bg-card-carbon border border-steel-border rounded-lg p-4">
           <span class="text-[9px] font-jetbrains-mono tracking-wider text-ash uppercase">Max Latency</span>
-          <div class="text-xl font-semibold text-snow mt-1 font-inter">{{ metrics.max_latency_ms.toFixed(0) }}ms</div>
+          <div class="text-xl font-semibold text-snow mt-1 font-inter">{{ metrics.max_latency_ms.toFixed(2) }}ms</div>
         </div>
         <div class="bg-card-carbon border border-steel-border rounded-lg p-4">
           <span class="text-[9px] font-jetbrains-mono tracking-wider text-ash uppercase">Min Latency</span>
-          <div class="text-xl font-semibold text-snow mt-1 font-inter">{{ metrics.min_latency_ms.toFixed(0) }}ms</div>
+          <div class="text-xl font-semibold text-snow mt-1 font-inter">{{ metrics.min_latency_ms.toFixed(2) }}ms</div>
         </div>
       </div>
 

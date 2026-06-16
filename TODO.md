@@ -67,3 +67,7 @@
 - [x] Logs auto-clear: dropdown (1h/6h/12h/24h/Never) + worker clears old ProxyLogs every minute
 - [x] Overview: merged Volume+Latency dual-axis chart, Max/Min latency cards, removed Total Requests, 9+3 grid
 - [x] Responsive: mobile sidebar overlay + backdrop, hamburger on mobile, sticky header, scrollable tables
+- [x] Sidebar: persist open/closed in localStorage, nav clicks keep current state (no auto-hide)
+- [x] Charts: disable all animations + shared tooltip on dual-axis Volume/Latency chart
+- [x] Overview: all decimal values to 2 places (success rate, latency)
+- [x] Overview: increased chart title margins (24px combined, 20px donut)
