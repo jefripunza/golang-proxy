@@ -3,9 +3,9 @@ WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install
 COPY . .
-RUN bun run build
+RUN bun run build-only
 
-FROM golang:1.24-bookworm AS be-builder
+FROM golang:1.25-bookworm AS be-builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download

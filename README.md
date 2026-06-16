@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/go-1.24-00ADD8?style=flat&logo=go" alt="Go">
+  <img src="https://img.shields.io/badge/go-1.25-00ADD8?style=flat&logo=go" alt="Go">
   <img src="https://img.shields.io/badge/vue-3.x-4FC08D?style=flat&logo=vue.js" alt="Vue">
   <img src="https://img.shields.io/badge/sqlite-3-003B57?style=flat&logo=sqlite" alt="SQLite">
   <img src="https://img.shields.io/badge/docker-ready-2496ED?style=flat&logo=docker" alt="Docker">
