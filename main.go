@@ -31,6 +31,9 @@ func main() {
 	// Start SSE log broker
 	go sseBroker.run()
 
+	// Start rate limiter cleanup
+	go rl.cleanup()
+
 	// Load route config cache from database
 	reloadConfigCache()
 

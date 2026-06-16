@@ -19,6 +19,11 @@ interface ProxyRoute {
   validation_middleware_url?: string
   ssl_active: boolean
   log_path_prefix: string
+  rate_limit: number
+  rate_limit_unit: string
+  rate_limit_method: string
+  rate_limit_header_key: string
+  rate_limit_header_value: string
 }
 
 const routes = ref<ProxyRoute[]>([])
@@ -47,6 +52,11 @@ const useValidationMiddleware = ref(false)
 const validationMiddlewareUrl = ref('')
 const sslActive = ref(false)
 const logPathPrefix = ref('')
+const rateLimit = ref(0)
+const rateLimitUnit = ref('second')
+const rateLimitMethod = ref('compact')
+const rateLimitHeaderKey = ref('')
+const rateLimitHeaderValue = ref('')
 
 const errors = ref<Record<string, string>>({})
 
@@ -150,6 +160,11 @@ const openAddModal = () => {
   validationMiddlewareUrl.value = ''
   sslActive.value = false
   logPathPrefix.value = ''
+  rateLimit.value = 0
+  rateLimitUnit.value = 'second'
+  rateLimitMethod.value = 'compact'
+  rateLimitHeaderKey.value = ''
+  rateLimitHeaderValue.value = ''
   errors.value = {}
   showModal.value = true
 }
@@ -167,6 +182,11 @@ const openEditModal = (route: ProxyRoute) => {
   validationMiddlewareUrl.value = route.validation_middleware_url || ''
   sslActive.value = route.ssl_active
   logPathPrefix.value = route.log_path_prefix || ''
+  rateLimit.value = route.rate_limit || 0
+  rateLimitUnit.value = route.rate_limit_unit || 'second'
+  rateLimitMethod.value = route.rate_limit_method || 'compact'
+  rateLimitHeaderKey.value = route.rate_limit_header_key || ''
+  rateLimitHeaderValue.value = route.rate_limit_header_value || ''
   errors.value = {}
   showModal.value = true
 }
@@ -185,7 +205,12 @@ const handleSave = async () => {
     use_validation_middleware: useValidationMiddleware.value,
     validation_middleware_url: useValidationMiddleware.value ? validationMiddlewareUrl.value : '',
     ssl_active: sslActive.value,
-    log_path_prefix: logPathPrefix.value
+    log_path_prefix: logPathPrefix.value,
+    rate_limit: rateLimit.value,
+    rate_limit_unit: rateLimitUnit.value,
+    rate_limit_method: rateLimitMethod.value,
+    rate_limit_header_key: rateLimitHeaderKey.value,
+    rate_limit_header_value: rateLimitHeaderValue.value
   }
 
   try {
@@ -367,6 +392,68 @@ watch(useValidationMiddleware, (val) => {
               placeholder="/api/v1, /api/v2 — comma-separated, trim spaces"
             />
           </FormField>
+          <!-- Rate Limiter (optional) -->
+          <div class="border-t border-steel-border pt-4 space-y-4">
+            <label class="flex items-center gap-2 text-sm text-snow cursor-pointer select-none">
+              <input type="checkbox" :checked="rateLimit > 0" @change="rateLimit = ($event.target as HTMLInputElement).checked ? 1 : 0" class="rounded bg-deep-coal border-graphite text-blue-cornflower focus:ring-0" />
+              <span>Enable Rate Limiter</span>
+            </label>
+            <div v-if="rateLimit > 0" class="grid grid-cols-2 gap-4">
+              <FormField label="Rate Limit" id="rateLimit">
+                <input
+                  v-model.number="rateLimit"
+                  type="number"
+                  min="1"
+                  id="rateLimit"
+                  class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors"
+                  placeholder="100"
+                />
+              </FormField>
+              <FormField label="Per" id="rateLimitUnit">
+                <select
+                  v-model="rateLimitUnit"
+                  id="rateLimitUnit"
+                  class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors"
+                >
+                  <option value="detik">Second</option>
+                  <option value="menit">Minute</option>
+                  <option value="jam">Hour</option>
+                  <option value="hari">Day</option>
+                </select>
+              </FormField>
+              <FormField label="Method" id="rateLimitMethod" class="col-span-2">
+                <select
+                  v-model="rateLimitMethod"
+                  id="rateLimitMethod"
+                  class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors"
+                >
+                  <option value="compact">Compact (all requests)</option>
+                  <option value="ip">Per IP Address</option>
+                  <option value="header">Per Header Value</option>
+                </select>
+              </FormField>
+              <template v-if="rateLimitMethod === 'header'">
+                <FormField label="Header Key" id="rlHeaderKey">
+                  <input
+                    v-model="rateLimitHeaderKey"
+                    type="text"
+                    id="rlHeaderKey"
+                    class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors"
+                    placeholder="X-API-Key"
+                  />
+                </FormField>
+                <FormField label="Header Value (optional)" id="rlHeaderValue">
+                  <input
+                    v-model="rateLimitHeaderValue"
+                    type="text"
+                    id="rlHeaderValue"
+                    class="w-full bg-deep-coal border border-graphite rounded-lg px-4 py-2 text-snow focus:outline-none focus:border-blue-cornflower transition-colors"
+                    placeholder="only match this value"
+                  />
+                </FormField>
+              </template>
+            </div>
+          </div>
         </div>
 
         <!-- Dynamic Fields -->

@@ -19,6 +19,11 @@ type ProxyRoute struct {
 	ValidationMiddlewareURL string    `json:"validation_middleware_url"`
 	SSLActive               bool      `json:"ssl_active"`
 	LogPathPrefix           string    `json:"log_path_prefix"`
+	RateLimit               int       `json:"rate_limit"`
+	RateLimitUnit           string    `json:"rate_limit_unit"`
+	RateLimitMethod         string    `json:"rate_limit_method"`
+	RateLimitHeaderKey      string    `json:"rate_limit_header_key"`
+	RateLimitHeaderValue    string    `json:"rate_limit_header_value"`
 }
 
 type ProxyLog struct {

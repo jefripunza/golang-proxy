@@ -38,11 +38,14 @@ docker run -d \
   -p 443:443 \
   -p 8080:8080 \
   -p 8000:8000 \
+  -v golang-proxy-data:/app/database \
   -e SERVER_USERNAME=admin \
   -e SERVER_PASSWORD=admin \
   --name golang-proxy \
   jefriherditriyanto/golang-proxy:latest
 ```
+
+> Mount `-v golang-proxy-data:/app/database` to persist routes, logs, blocklist, and SSL certs across container restarts.
 
 Dashboard: `http://localhost:8000` (login: `admin` / `admin`)
 Proxy listener: `http://localhost:8080`

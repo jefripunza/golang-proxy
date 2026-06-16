@@ -10,7 +10,7 @@ if [ -f .env ]; then
   export $(grep -v '^#' .env | xargs)
 fi
 
-LISTEN_PORT="${LISTEN_PORT:-8080}"
+LISTEN_PORT="${LISTEN_PORT:-8082}"
 SERVER_PORT="${SERVER_PORT:-8000}"
 
 echo "=== Golang Proxy Docker ==="
@@ -59,10 +59,6 @@ else
   docker run -d \
     -p "$LISTEN_PORT:8080" \
     -p "$SERVER_PORT:8000" \
-    -e LISTEN_PORT="$LISTEN_PORT" \
-    -e SERVER_PORT="$SERVER_PORT" \
-    -e SERVER_USERNAME="${SERVER_USERNAME:-admin}" \
-    -e SERVER_PASSWORD="${SERVER_PASSWORD:-admin}" \
     --name "$CONTAINER_NAME" \
     "$IMAGE_NAME"
 

@@ -235,6 +235,22 @@ func handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// 2b. Rate limiter check
+	if route.RateLimit > 0 {
+		rlKey := getRateLimitKey(r, route, clientIP)
+		if rlKey == "" {
+			http.Error(w, "Rate limited: header mismatch", http.StatusTooManyRequests)
+			logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusTooManyRequests, time.Since(startTime), clientIP, "Rate limited: header mismatch", "", "", "", "")
+			return
+		}
+		window := unitToDuration(route.RateLimitUnit)
+		if !rl.allow(route.Domain, rlKey, route.RateLimit, window) {
+			http.Error(w, "429 Too Many Requests", http.StatusTooManyRequests)
+			logProxyRequest(r.Host, r.URL.Path, r.Method, http.StatusTooManyRequests, time.Since(startTime), clientIP, "Rate limited", "", "", "", "")
+			return
+		}
+	}
+
 	// 3. Dynamic route resolution
 	if route.SchemaType == "dynamic" {
 		var err error

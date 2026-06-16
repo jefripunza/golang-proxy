@@ -223,6 +223,11 @@ func handleUpdateRoute(w http.ResponseWriter, r *http.Request) {
 	route.ValidationMiddlewareURL = updated.ValidationMiddlewareURL
 	route.SSLActive = updated.SSLActive
 	route.LogPathPrefix = updated.LogPathPrefix
+	route.RateLimit = updated.RateLimit
+	route.RateLimitUnit = updated.RateLimitUnit
+	route.RateLimitMethod = updated.RateLimitMethod
+	route.RateLimitHeaderKey = updated.RateLimitHeaderKey
+	route.RateLimitHeaderValue = updated.RateLimitHeaderValue
 
 	if err := db.Save(&route).Error; err != nil {
 		http.Error(w, "failed to update route: "+err.Error(), http.StatusInternalServerError)

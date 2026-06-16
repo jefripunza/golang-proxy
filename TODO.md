@@ -1,6 +1,7 @@
 # Task List
 
 ## Backlog
+- tambahkan feature Rate Limiter di bawah field "Log URL Prefix (optional)" dalam bentuk optional, jika field nya di isi angka maka sebelah field ini juga ada dropdwon untuk memilih satuan nya "detik,menit,jam,hari" dan metode rate limiter nya menggunakan apa "compact,ip,header", jika memilih header maka di bawah kedua field ini ada nambah 2 field untuk key dan value nya untuk menentukan header apa yang akan digunakan untuk rate limiting. rate limiter yang di baca adalah dari banyaknya "Log URL Prefix", jika ada isi nya berarti cara rate limiter nya juga menggunakan length itu
 - 
 
 ## Error / Bug
@@ -56,3 +57,4 @@
 - [x] Logs: Clear Logs button + DELETE /api/logs endpoint
 - [x] Logs detail: add request body + response body (capped 64KB, labeled "[file/large body — truncated]" if oversized)
 - [x] Dockerfile + docker.sh adapted for golang-proxy (bun FE + go BE, multi-arch buildx)
+- [x] Rate Limiter: configurable per-route (limit, unit second/minute/hour/day, method compact/ip/header)
