@@ -3,6 +3,9 @@ package main
 import (
 	"log"
 	"time"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func metricWorker() {
@@ -11,7 +14,9 @@ func metricWorker() {
 		showAt := now.Truncate(time.Minute)
 
 		var existing ProxyMetric
-		if err := db.Where("show_at = ?", showAt).First(&existing).Error; err != nil {
+		if err := db.
+		Session(&gorm.Session{Logger: logger.Default.LogMode(logger.Silent)}). // silent mode to avoid noise
+		Where("show_at = ?", showAt).First(&existing).Error; err != nil {
 			db.Create(&ProxyMetric{ShowAt: showAt, RequestVolume: 0, RequestLatency: 0})
 		}
 

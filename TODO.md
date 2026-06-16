@@ -1,6 +1,9 @@
 # Task List
 
 ## Backlog
+- di halaman Logs, button "Clear Logs", jika di execute maka yang clear hanya table log saja "ProxyLog" dan jangan clear table lain;
+- di halaman Overview, tambahkan button clear untuk clear table "ProxyMetric";
+- untuk rate limiter, bikin table baru saja, table rate limiter tidak boleh di delete / clear;
 - 
 
 ## Error / Bug

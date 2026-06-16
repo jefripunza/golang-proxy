@@ -75,7 +75,7 @@ const connectStream = () => {
   eventSource.onerror = () => {
     eventSource?.close()
     eventSource = null
-    setTimeout(connectStream, 3000)
+    setTimeout(connectStream, 1000)
   }
 }
 
@@ -143,6 +143,10 @@ watch(
       connectStream()
     } else {
       disconnectStream()
+      resizeObserver?.disconnect()
+      resizeObserver = null
+      terminal?.dispose()
+      terminal = null
     }
   },
   { immediate: true }
